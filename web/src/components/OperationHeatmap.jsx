@@ -2,9 +2,17 @@ import { fmtInt, fmtPct, rateBand, magnitudeColor, magnitudeText } from '../util
 
 // 작업장(행) x 월(열) 히트맵 테이블
 export default function OperationHeatmap({ workshops, months, metric, selected, onSelect }) {
-  const isRate = metric === 'rate'
-  const getValues = (w) =>
-    metric === 'rate' ? w.operationRate : metric === 'capacity' ? w.capacity : w.load
+  const isRate = metric === 'rate_actual' || metric === 'rate_plan'
+  const getValues = (w) => {
+    switch (metric) {
+      case 'rate_actual': return w.actualOperationRate || w.operationRate
+      case 'rate_plan': return w.operationRate
+      case 'capacity': return w.capacity
+      case 'load_actual': return w.actualLoad || w.load
+      case 'load_plan': return w.load
+      default: return w.operationRate
+    }
+  }
 
   // 능력/부하: 전체 셀 기준 min/max (색상 보간용)
   let gMin = Infinity

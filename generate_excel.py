@@ -106,6 +106,7 @@ month_of = [r["착수일"].month for r in rows1]
 # ===================================================================
 final_ws = [None] * N
 assigned_by = [None] * N   # 각 블록이 어떤 단계/규칙으로 배정됐는지 추적
+pools_of_block = [[] for _ in range(N)]   # 각 블록이 어떤 단계/규칙의 pool에 속했는지 (대상물량 추적)
 
 # --- 단계 1: 목표 조업도 + 목표 공수 ---
 total_load_pm = {m: sum(load_by_area[a][m] for a in areas) for m in months}
@@ -117,6 +118,7 @@ target_mh = {a: {m: target_rate[m] * cap_by_area[a][m] for m in months} for a in
 n_step2 = 0
 for i, r in enumerate(rows1):
     if r["H/T"] == "T" and r["물성"] in ("대", "중"):
+        pools_of_block[i].append("단계 2")
         final_ws[i] = r["기준계획작업장"]
         assigned_by[i] = "단계 2"
         n_step2 += 1
@@ -125,6 +127,7 @@ for i, r in enumerate(rows1):
 n_step3 = 0
 for i, r in enumerate(rows1):
     if final_ws[i] is None and r["H/T"] == "T" and r["물성"] == "소" and r["선호작업장1"] == "동일":
+        pools_of_block[i].append("단계 3")
         final_ws[i] = r["부모블록"]
         assigned_by[i] = "단계 3"
         n_step3 += 1
@@ -163,10 +166,15 @@ pool_s7 = sorted(
     [i for i in range(N) if final_ws[i] is None and rows1[i]["물성"] == "소" and rows1[i]["H/T"] == "H"],
     key=lambda i: rows1[i]["착수일"]
 )
+for i in pool_s7:
+    pools_of_block[i].append("단계 7")
 month_cum_357 = {a: {m: 0 for m in months} for a in target_areas_357}
 for i in range(N):
     if final_ws[i] in target_areas_357:
         month_cum_357[final_ws[i]][month_of[i]] += rows1[i]["공수"]
+
+# (area, month) 별 마지막 배정 블록 인덱스 — saturate 시점 가시화용
+step7_last_assigned = {a: {m: None for m in months} for a in target_areas_357}
 
 n_step7 = 0
 next_idx = 0
@@ -182,17 +190,20 @@ for i in pool_s7:
         month_cum_357[a][m] += mh
         final_ws[i] = a
         assigned_by[i] = "단계 7"
+        step7_last_assigned[a][m] = i
         n_step7 += 1
         break
     next_idx = (target_areas_357.index(assigned_area) + 1) % 3 if assigned_area else 0
 
 # --- 단계 8: H+소+공란 → '미지정' ---
+pool_s8 = [i for i, r in enumerate(rows1) if final_ws[i] is None and r["H/T"] == "H" and r["물성"] == "소"]
+for i in pool_s8:
+    pools_of_block[i].append("단계 8")
 n_step8 = 0
-for i, r in enumerate(rows1):
-    if final_ws[i] is None and r["H/T"] == "H" and r["물성"] == "소":
-        final_ws[i] = "미지정"
-        assigned_by[i] = "단계 8"
-        n_step8 += 1
+for i in pool_s8:
+    final_ws[i] = "미지정"
+    assigned_by[i] = "단계 8"
+    n_step8 += 1
 
 # ===================================================================
 # 신규 규칙 R1~R10  (헬퍼)
@@ -247,6 +258,8 @@ TARGET_R1 = {"D114", "D174", "D204"}
 pool_r1 = [i for i, r in enumerate(rows1) if final_ws[i] is None
            and r["H/T"] == "H" and r["PRJ"] == "A"
            and r["물성"] == "중" and r["블록명"][:4] in TARGET_R1]
+for i in pool_r1:
+    pools_of_block[i].append("R1")
 n_r1 = 0
 for i in pool_r1:
     assign_to(i, "area2", "R1")
@@ -258,6 +271,8 @@ pool_r2 = sorted(
      and rows1[i]["H/T"] == "H" and rows1[i]["물성"] == "중" and rows1[i]["JG"] == "F"],
     key=lambda i: rows1[i]["착수일"]
 )
+for i in pool_r2:
+    pools_of_block[i].append("R2")
 n_r2 = 0
 for i in pool_r2:
     m = month_of[i]
@@ -272,6 +287,8 @@ EXCLUDE_R3 = {"E11", "E51"}
 pool_r3 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] == "중"
            and rows1[i]["블록명"][0] != "H" and rows1[i]["블록명"][:3] not in EXCLUDE_R3]
+for i in pool_r3:
+    pools_of_block[i].append("R3")
 groups_r3 = make_groups(pool_r3, lambda r: (r["PRJ_N"], r["블록명"][:3]))
 
 next_area_r3 = "area1"
@@ -309,12 +326,16 @@ for grp in groups_r3:
 pool_r4 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][0] == "H" and rows1[i]["블록명"][-1] == "P"]
+for i in pool_r4:
+    pools_of_block[i].append("R4")
 n_r4, n_grp_r4, n_grp_r4_a = grouped_skip(pool_r4, "area7", "R4")
 
 # --- R5: H + 대/중 + 블록명[0]='H' + 블록명[-1]='S' + 미배정 → group, AREA8 ---
 pool_r5 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][0] == "H" and rows1[i]["블록명"][-1] == "S"]
+for i in pool_r5:
+    pools_of_block[i].append("R5")
 n_r5, n_grp_r5, n_grp_r5_a = grouped_skip(pool_r5, "area8", "R5")
 
 # --- R6: H + 대/중 + 블록명[:3] ∈ {E11, F51} + 블록명[-1]='P' + 미배정 → group, AREA9 ---
@@ -322,12 +343,16 @@ PREFIX_R6 = {"E11", "F51"}
 pool_r6 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][:3] in PREFIX_R6 and rows1[i]["블록명"][-1] == "P"]
+for i in pool_r6:
+    pools_of_block[i].append("R6")
 n_r6, n_grp_r6, n_grp_r6_a = grouped_skip(pool_r6, "area9", "R6")
 
 # --- R7: H + 대/중 + 블록명[:3] ∈ {E11, F51} + 블록명[-1]='S' + 미배정 → group, AREA10 ---
 pool_r7 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][:3] in PREFIX_R6 and rows1[i]["블록명"][-1] == "S"]
+for i in pool_r7:
+    pools_of_block[i].append("R7")
 n_r7, n_grp_r7, n_grp_r7_a = grouped_skip(pool_r7, "area10", "R7")
 
 # --- R8: H + 대/중 + 블록명[:3] ∈ {E11, F51} + 공란(R6/R7 미적용분) → AREA11 (개별, 착수일 asc) ---
@@ -337,6 +362,8 @@ pool_r8 = sorted(
      and rows1[i]["블록명"][:3] in PREFIX_R6],
     key=lambda i: rows1[i]["착수일"]
 )
+for i in pool_r8:
+    pools_of_block[i].append("R8")
 n_r8 = 0
 for i in pool_r8:
     m = month_of[i]
@@ -348,6 +375,8 @@ for i in pool_r8:
 # --- R9: H + 대 + PC=P + 공란 → group(PRJ_N, 블록명[:3]), AREA12 ---
 pool_r9 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] == "대" and rows1[i]["PC"] == "P"]
+for i in pool_r9:
+    pools_of_block[i].append("R9")
 n_r9, n_grp_r9, n_grp_r9_a = grouped_skip(pool_r9, "area12", "R9")
 
 # --- R10: H + 공란 → AREA1, AREA2, AREA13 순차 (개별, 착수일 asc) ---
@@ -355,6 +384,8 @@ pool_r10 = sorted(
     [i for i in range(N) if final_ws[i] is None and rows1[i]["H/T"] == "H"],
     key=lambda i: rows1[i]["착수일"]
 )
+for i in pool_r10:
+    pools_of_block[i].append("R10")
 SEQ_R10 = ["area1", "area2", "area13"]
 n_r10 = 0
 n_r10_breakdown = {"area1": 0, "area2": 0, "area13": 0}
@@ -434,6 +465,30 @@ def _first_date_iso(code):
     dates = [rows1[i]["착수일"] for i in range(N) if assigned_by[i] == code]
     return min(dates).isoformat() if dates else None
 
+def _build_step7_monthly():
+    """단계 7의 (area, month) 매트릭스 — 목표공수, 누적, util%, 마지막 배정 블록"""
+    rows = []
+    for a in target_areas_357:
+        months_data = []
+        for m in months:
+            target = round(target_mh[a][m], 2)
+            cum = round(month_cum_357[a][m], 2)
+            util = round(cum / target * 100, 1) if target > 0 else 0
+            idx = step7_last_assigned[a][m]
+            last_block = None
+            if idx is not None:
+                last_block = {
+                    "name": rows1[idx]["블록명"],
+                    "date": rows1[idx]["착수일"].isoformat(),
+                    "mh": rows1[idx]["공수"],
+                }
+            months_data.append({
+                "month": m, "target": target, "cum": cum,
+                "util": util, "lastBlock": last_block,
+            })
+        rows.append({"area": a, "months": months_data})
+    return rows
+
 def _subrows_by_area(code, area_list):
     """code 로 배정된 블록을 area별로 분해. (단계 7, R3, R10 용)"""
     rows = []
@@ -460,6 +515,16 @@ def _subrows_by_area(code, area_list):
         })
     return rows
 
+# ===================================================================
+# 배정결과 기준 작업장별 월별 공수 + 실적 조업도
+# 실적 조업도[area][m] = (그 area에 배정된 블록 중 착수일이 m월인 공수 합) / 능력[area][m]
+# ===================================================================
+assigned_mh_pm = {a: {m: 0.0 for m in months} for a in areas}
+for i in range(N):
+    fa = final_ws[i]
+    if fa in assigned_mh_pm:   # area1~15만 (미지정/None 제외)
+        assigned_mh_pm[fa][month_of[i]] += rows1[i]["공수"]
+
 web_data = {
     "generatedAt": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
     "months": [f"{m}월" for m in months],
@@ -472,6 +537,12 @@ web_data = {
             "capacity": [w["능력"][m] for m in months],
             "load": [w["부하"][m] for m in months],
             "operationRate": [oper_rates[m] for m in months],
+            "actualLoad": [round(assigned_mh_pm[w["작업장"]][m], 2) for m in months],
+            "actualOperationRate": [
+                round(assigned_mh_pm[w["작업장"]][m] / w["능력"][m], 4)
+                if w["능력"][m] > 0 else 0
+                for m in months
+            ],
         }
         for w in ws_data
     ],
@@ -479,6 +550,7 @@ web_data = {
     "targetRate": [target_rate[m] for m in months],
     "targetManhours": {a: [target_mh[a][m] for m in months] for a in areas},
     "overloadTable": overload_rows,
+    "step7Monthly": _build_step7_monthly(),
     "stepCounts": {
         "step2": n_step2, "step3": n_step3, "step7": n_step7, "step8": n_step8,
         "r1": n_r1, "r2": n_r2, "r3": n_r3, "r4": n_r4, "r5": n_r5,
@@ -565,6 +637,7 @@ blocks_data = [
         "pref4": r["선호작업장4"], "pref5": r["선호작업장5"],
         "finalWs": final_ws[idx],
         "assignedBy": assigned_by[idx],
+        "pools": pools_of_block[idx],
     }
     for idx, r in enumerate(rows1)
 ]

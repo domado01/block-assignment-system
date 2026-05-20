@@ -7,23 +7,28 @@ import LogicView from './components/LogicView'
 import { fmtInt, fmtPct, RATE_BANDS } from './util'
 
 const METRICS = [
-  { key: 'rate', label: '조업도' },
+  { key: 'rate_actual', label: '조업도 (실적)' },
+  { key: 'rate_plan', label: '조업도 (평균)' },
   { key: 'capacity', label: '능력' },
-  { key: 'load', label: '부하' },
+  { key: 'load_actual', label: '공수 (실적)' },
+  { key: 'load_plan', label: '부하 (랜덤)' },
 ]
 
 export default function App() {
   const [tab, setTab] = useState('operation')
-  const [metric, setMetric] = useState('rate')
+  const [metric, setMetric] = useState('rate_actual')
   const [selected, setSelected] = useState(data.workshops[0].name)
 
   const { workshops, months } = data
 
-  // 월별 평균조업도 (작업장 동일 → 첫 작업장 기준)
-  const monthlyRate = workshops[0].operationRate
-  const yearAvg = monthlyRate.reduce((a, b) => a + b, 0) / monthlyRate.length
-  const maxIdx = monthlyRate.indexOf(Math.max(...monthlyRate))
-  const minIdx = monthlyRate.indexOf(Math.min(...monthlyRate))
+  // 월별 실적 조업도 (작업장별 평균)
+  const monthlyActualAvg = months.map((_, i) => {
+    const sum = workshops.reduce((a, w) => a + (w.actualOperationRate?.[i] ?? 0), 0)
+    return sum / workshops.length
+  })
+  const yearAvg = monthlyActualAvg.reduce((a, b) => a + b, 0) / monthlyActualAvg.length
+  const maxIdx = monthlyActualAvg.indexOf(Math.max(...monthlyActualAvg))
+  const minIdx = monthlyActualAvg.indexOf(Math.min(...monthlyActualAvg))
 
   const sel = workshops.find((w) => w.name === selected)
   const metricLabel = METRICS.find((m) => m.key === metric).label
@@ -64,19 +69,20 @@ export default function App() {
               <div className="card-value">{workshops.length}</div>
             </div>
             <div className="card">
-              <div className="card-label">연평균 조업도</div>
+              <div className="card-label">연평균 실적 조업도</div>
               <div className="card-value">{fmtPct(yearAvg)}</div>
+              <div className="card-sub">배정 결과 기준</div>
             </div>
             <div className="card">
-              <div className="card-label">최고 조업도 월</div>
+              <div className="card-label">최고 실적 조업도 월</div>
               <div className="card-value">
-                {months[maxIdx]} <span className="card-sub">{fmtPct(monthlyRate[maxIdx])}</span>
+                {months[maxIdx]} <span className="card-sub">{fmtPct(monthlyActualAvg[maxIdx])}</span>
               </div>
             </div>
             <div className="card">
-              <div className="card-label">최저 조업도 월</div>
+              <div className="card-label">최저 실적 조업도 월</div>
               <div className="card-value">
-                {months[minIdx]} <span className="card-sub">{fmtPct(monthlyRate[minIdx])}</span>
+                {months[minIdx]} <span className="card-sub">{fmtPct(monthlyActualAvg[minIdx])}</span>
               </div>
             </div>
             <div className="card">
@@ -101,7 +107,7 @@ export default function App() {
               </div>
             </div>
 
-            {metric === 'rate' && (
+            {(metric === 'rate_actual' || metric === 'rate_plan') && (
               <div className="legend">
                 {RATE_BANDS.map((b) => (
                   <span key={b.label} className="legend-item">
@@ -131,10 +137,10 @@ export default function App() {
               <div className="charts">
                 <MonthlyChart
                   months={months}
-                  values={sel.operationRate}
+                  values={sel.actualOperationRate || sel.operationRate}
                   color="#2563eb"
                   valueFormat={fmtPct}
-                  title="월별 평균조업도"
+                  title="월별 실적 조업도 (배정기반)"
                 />
                 <MonthlyChart
                   months={months}
@@ -145,10 +151,10 @@ export default function App() {
                 />
                 <MonthlyChart
                   months={months}
-                  values={sel.load}
+                  values={sel.actualLoad || sel.load}
                   color="#e11d48"
                   valueFormat={fmtInt}
-                  title="월별 부하"
+                  title="월별 실적 공수 (배정기반)"
                 />
               </div>
             </div>
@@ -182,6 +188,7 @@ export default function App() {
             stepDetails={data.stepDetails}
             overloadTable={data.overloadTable}
             targetRate={data.targetRate}
+            step7Monthly={data.step7Monthly}
             months={months}
           />
         </main>

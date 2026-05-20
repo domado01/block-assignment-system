@@ -796,6 +796,101 @@ table {
   font-weight: normal;
 }
 
+/* ---- 단계 7 월별 매트릭스 ---- */
+.step7-matrix {
+  border-collapse: collapse;
+  font-size: 11px;
+  width: max-content;
+  min-width: 100%;
+}
+.step7-matrix th,
+.step7-matrix td {
+  border: 1px solid var(--border);
+  padding: 5px 7px;
+  text-align: center;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.step7-matrix thead th {
+  background: #f8fafc;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 11.5px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.step7-matrix .area-cell {
+  background: #f1f5f9;
+  font-weight: 700;
+  color: #0f172a;
+  vertical-align: middle;
+  font-size: 12.5px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+.step7-matrix .mtx-cell { min-width: 82px; }
+.step7-matrix .mtx-util {
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+}
+.step7-matrix .mtx-cum {
+  font-size: 10px;
+  color: #475569;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.step7-matrix .mtx-last {
+  font-size: 10px;
+  margin-top: 4px;
+  color: #475569;
+  font-family: 'Consolas', monospace;
+  line-height: 1.25;
+}
+.step7-matrix .mtx-last.muted { color: #cbd5e1; }
+.step7-matrix .mtx-low { background: #f0fdf4; }
+.step7-matrix .mtx-mid { background: #fefce8; }
+.step7-matrix .mtx-high { background: #fff7ed; color: #9a3412; }
+.step7-matrix .mtx-sat { background: #fef2f2; color: #991b1b; }
+.step7-matrix .mtx-sat .mtx-util { font-size: 14px; }
+
+/* ---- 상세 테이블 status filter + summary ---- */
+.detail-summary {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.seg-sm {
+  padding: 2px;
+}
+.seg-sm button {
+  padding: 5px 12px;
+  font-size: 11.5px;
+}
+.badge-skip {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.block-detail-table tbody tr.row-skip {
+  background: #fffbeb;
+}
+.block-detail-table tbody tr.row-skip:hover {
+  background: #fef3c7;
+}
+.block-detail-table tbody tr.row-here {
+  background: #f0fdf4;
+}
+.block-detail-table tbody tr.row-here:hover {
+  background: #dcfce7;
+}
+
 /* ---- 블록 상세 테이블 ---- */
 .detail-panel {
   border: 2px solid var(--accent);
