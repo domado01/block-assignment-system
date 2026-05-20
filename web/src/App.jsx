@@ -179,6 +179,7 @@ export default function App() {
         <main>
           <LogicView
             stepCounts={data.stepCounts}
+            stepDetails={data.stepDetails}
             overloadTable={data.overloadTable}
             targetRate={data.targetRate}
             months={months}

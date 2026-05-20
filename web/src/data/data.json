@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20 15:46",
+  "generatedAt": "2026-05-20 15:53",
   "months": [
     "1월",
     "2월",
@@ -1129,5 +1129,133 @@
     "r8": 6,
     "r9": 386,
     "r10": 648
-  }
+  },
+  "stepDetails": [
+    {
+      "code": "단계 2",
+      "cond": "H/T=T  AND  물성∈{대,중}",
+      "target": "기준계획작업장",
+      "pool": 3367,
+      "assigned": 3367,
+      "skipped": 0,
+      "note": "한도 검사 없음"
+    },
+    {
+      "code": "단계 3",
+      "cond": "H/T=T  AND  물성=소  AND  선호1='동일'",
+      "target": "부모블록",
+      "pool": 318,
+      "assigned": 318,
+      "skipped": 0,
+      "note": "한도 검사 없음"
+    },
+    {
+      "code": "단계 7",
+      "cond": "H/T=H  AND  물성=소  (미배정)",
+      "target": "area3·4·5 라운드로빈",
+      "pool": 1646,
+      "assigned": 1270,
+      "skipped": 376,
+      "note": "월별 목표공수 한도"
+    },
+    {
+      "code": "단계 8",
+      "cond": "H/T=H  AND  물성=소  잔여",
+      "target": "'미지정'",
+      "pool": 376,
+      "assigned": 376,
+      "skipped": 0,
+      "note": "잔여 일괄 처리"
+    },
+    {
+      "code": "R1",
+      "cond": "H+PRJ=A+물성=중+첫4∈{D114,D174,D204}",
+      "target": "area2",
+      "pool": 0,
+      "assigned": 0,
+      "skipped": 0,
+      "note": "직접 배정 (한도 없음)"
+    },
+    {
+      "code": "R2",
+      "cond": "H+물성=중+JG=F",
+      "target": "area2",
+      "pool": 560,
+      "assigned": 344,
+      "skipped": 216,
+      "note": "착수일 asc, 월별 한도"
+    },
+    {
+      "code": "R3",
+      "cond": "H+물성=중+첫≠H+첫3∉{E11,E51}",
+      "target": "area1↔area6 (그룹)",
+      "pool": 945,
+      "assigned": 798,
+      "skipped": 147,
+      "note": "area1: 350, area6: 448  /  그룹 782건 배정/137건 건너뜀"
+    },
+    {
+      "code": "R4",
+      "cond": "H+대중+첫=H+끝=P",
+      "target": "area7 (그룹)",
+      "pool": 193,
+      "assigned": 170,
+      "skipped": 23,
+      "note": "그룹 163/186"
+    },
+    {
+      "code": "R5",
+      "cond": "H+대중+첫=H+끝=S",
+      "target": "area8 (그룹)",
+      "pool": 214,
+      "assigned": 163,
+      "skipped": 51,
+      "note": "그룹 159/207"
+    },
+    {
+      "code": "R6",
+      "cond": "H+대중+첫3∈{E11,F51}+끝=P",
+      "target": "area9 (그룹)",
+      "pool": 2,
+      "assigned": 2,
+      "skipped": 0,
+      "note": "그룹 2/2"
+    },
+    {
+      "code": "R7",
+      "cond": "H+대중+첫3∈{E11,F51}+끝=S",
+      "target": "area10 (그룹)",
+      "pool": 3,
+      "assigned": 3,
+      "skipped": 0,
+      "note": "그룹 3/3"
+    },
+    {
+      "code": "R8",
+      "cond": "H+대중+첫3∈{E11,F51} 잔여",
+      "target": "area11",
+      "pool": 6,
+      "assigned": 6,
+      "skipped": 0,
+      "note": "착수일 asc, 월별 한도"
+    },
+    {
+      "code": "R9",
+      "cond": "H+물성=대+PC=P",
+      "target": "area12 (그룹)",
+      "pool": 719,
+      "assigned": 386,
+      "skipped": 333,
+      "note": "그룹 380/704"
+    },
+    {
+      "code": "R10",
+      "cond": "H + 잔여 (catch-all)",
+      "target": "area1·2·13 순차",
+      "pool": 1437,
+      "assigned": 648,
+      "skipped": 789,
+      "note": "area1: 138, area2: 57, area13: 453"
+    }
+  ]
 }

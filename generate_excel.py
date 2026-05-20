@@ -222,24 +222,28 @@ def make_groups(pool, key_func):
 
 def grouped_skip(pool, area, key=lambda r: (r["PRJ_N"], r["블록명"][:3])):
     """그룹화 → area 할당. 월별 목표공수 초과하는 그룹은 건너뛰고 다음 그룹 계속.
-    한도 초과 area여도 다른 그룹·블록 처리는 멈추지 않음."""
+    한도 초과 area여도 다른 그룹·블록 처리는 멈추지 않음.
+    Returns: (assigned_block_count, total_group_count, assigned_group_count)"""
     groups = make_groups(pool, key)
     cnt = 0
+    grp_assigned = 0
     for grp in groups:
         if not group_fits(grp, area):
             continue   # 이 그룹만 건너뛰고 다음 그룹 시도
         assign_group(grp, area)
         cnt += len(grp)
-    return cnt
+        grp_assigned += 1
+    return cnt, len(groups), grp_assigned
 
 # --- R1: H + PRJ=A + 물성=중 + 블록명[:4] ∈ {D114, D174, D204} → AREA2 ---
 TARGET_R1 = {"D114", "D174", "D204"}
+pool_r1 = [i for i, r in enumerate(rows1) if final_ws[i] is None
+           and r["H/T"] == "H" and r["PRJ"] == "A"
+           and r["물성"] == "중" and r["블록명"][:4] in TARGET_R1]
 n_r1 = 0
-for i, r in enumerate(rows1):
-    if (final_ws[i] is None and r["H/T"] == "H" and r["PRJ"] == "A"
-        and r["물성"] == "중" and r["블록명"][:4] in TARGET_R1):
-        assign_to(i, "area2")
-        n_r1 += 1
+for i in pool_r1:
+    assign_to(i, "area2")
+    n_r1 += 1
 
 # --- R2: H + 물성=중 + JG=F + 미배정 → AREA2 (착수일 asc, 월별 목표공수 한도) ---
 pool_r2 = sorted(
@@ -265,44 +269,59 @@ groups_r3 = make_groups(pool_r3, lambda r: (r["PRJ_N"], r["블록명"][:3]))
 
 next_area_r3 = "area1"
 n_r3 = 0
+n_r3_a1 = 0
+n_r3_a6 = 0
+n_r3_grp_assigned = 0
+n_r3_grp_skipped = 0
 for grp in groups_r3:
     primary = next_area_r3
     secondary = "area6" if primary == "area1" else "area1"
     if group_fits(grp, primary):
         assign_group(grp, primary)
         n_r3 += len(grp)
+        if primary == "area1":
+            n_r3_a1 += len(grp)
+        else:
+            n_r3_a6 += len(grp)
+        n_r3_grp_assigned += 1
         next_area_r3 = secondary
     elif group_fits(grp, secondary):
         assign_group(grp, secondary)
         n_r3 += len(grp)
+        if secondary == "area1":
+            n_r3_a1 += len(grp)
+        else:
+            n_r3_a6 += len(grp)
+        n_r3_grp_assigned += 1
         next_area_r3 = primary
     else:
+        n_r3_grp_skipped += 1
         continue   # area1·6 모두 초과 → 이 그룹만 건너뜀
 
 # --- R4: H + 대/중 + 블록명[0]='H' + 블록명[-1]='P' + 미배정 → group, AREA7 ---
 pool_r4 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][0] == "H" and rows1[i]["블록명"][-1] == "P"]
-n_r4 = grouped_skip(pool_r4, "area7")
+n_r4, n_grp_r4, n_grp_r4_a = grouped_skip(pool_r4, "area7")
 
 # --- R5: H + 대/중 + 블록명[0]='H' + 블록명[-1]='S' + 미배정 → group, AREA8 ---
 pool_r5 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][0] == "H" and rows1[i]["블록명"][-1] == "S"]
-n_r5 = grouped_skip(pool_r5, "area8")
+n_r5, n_grp_r5, n_grp_r5_a = grouped_skip(pool_r5, "area8")
 
 # --- R6: H + 대/중 + 블록명[:3] ∈ {E11, F51} + 블록명[-1]='P' + 미배정 → group, AREA9 ---
 PREFIX_R6 = {"E11", "F51"}
 pool_r6 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][:3] in PREFIX_R6 and rows1[i]["블록명"][-1] == "P"]
-n_r6 = grouped_skip(pool_r6, "area9")
+n_r6, n_grp_r6, n_grp_r6_a = grouped_skip(pool_r6, "area9")
 
 # --- R7: H + 대/중 + 블록명[:3] ∈ {E11, F51} + 블록명[-1]='S' + 미배정 → group, AREA10 ---
 pool_r7 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][:3] in PREFIX_R6 and rows1[i]["블록명"][-1] == "S"]
-n_r7 = grouped_skip(pool_r7, "area10")
+n_r7, n_grp_r7, n_grp_r7_a = grouped_skip(pool_r7, "area10")
 
 # --- R8: H + 대/중 + 블록명[:3] ∈ {E11, F51} + 공란(R6/R7 미적용분) → AREA11 (개별, 착수일 asc) ---
 pool_r8 = sorted(
@@ -322,7 +341,7 @@ for i in pool_r8:
 # --- R9: H + 대 + PC=P + 공란 → group(PRJ_N, 블록명[:3]), AREA12 ---
 pool_r9 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] == "대" and rows1[i]["PC"] == "P"]
-n_r9 = grouped_skip(pool_r9, "area12")
+n_r9, n_grp_r9, n_grp_r9_a = grouped_skip(pool_r9, "area12")
 
 # --- R10: H + 공란 → AREA1, AREA2, AREA13 순차 (개별, 착수일 asc) ---
 pool_r10 = sorted(
@@ -331,12 +350,14 @@ pool_r10 = sorted(
 )
 SEQ_R10 = ["area1", "area2", "area13"]
 n_r10 = 0
+n_r10_breakdown = {"area1": 0, "area2": 0, "area13": 0}
 for i in pool_r10:
     m = month_of[i]
     for a in SEQ_R10:
         if cum_per_area[a][m] + rows1[i]["공수"] <= target_mh[a][m]:
             assign_to(i, a)
             n_r10 += 1
+            n_r10_breakdown[a] += 1
             break
     # 세 area 모두 초과해도 다음 블록 시도 (이 블록은 그냥 건너뜀)
 
@@ -418,6 +439,58 @@ web_data = {
         "r1": n_r1, "r2": n_r2, "r3": n_r3, "r4": n_r4, "r5": n_r5,
         "r6": n_r6, "r7": n_r7, "r8": n_r8, "r9": n_r9, "r10": n_r10,
     },
+    # 검증용 상세 — 각 단계/규칙별 후보·배정·미배정·세부 분포
+    "stepDetails": [
+        {"code": "단계 2", "cond": "H/T=T  AND  물성∈{대,중}",
+         "target": "기준계획작업장", "pool": n_step2, "assigned": n_step2,
+         "skipped": 0, "note": "한도 검사 없음"},
+        {"code": "단계 3", "cond": "H/T=T  AND  물성=소  AND  선호1='동일'",
+         "target": "부모블록", "pool": n_step3, "assigned": n_step3,
+         "skipped": 0, "note": "한도 검사 없음"},
+        {"code": "단계 7", "cond": "H/T=H  AND  물성=소  (미배정)",
+         "target": "area3·4·5 라운드로빈", "pool": len(pool_s7), "assigned": n_step7,
+         "skipped": len(pool_s7) - n_step7, "note": "월별 목표공수 한도"},
+        {"code": "단계 8", "cond": "H/T=H  AND  물성=소  잔여",
+         "target": "'미지정'", "pool": n_step8, "assigned": n_step8,
+         "skipped": 0, "note": "잔여 일괄 처리"},
+        {"code": "R1", "cond": "H+PRJ=A+물성=중+첫4∈{D114,D174,D204}",
+         "target": "area2", "pool": len(pool_r1), "assigned": n_r1,
+         "skipped": 0, "note": "직접 배정 (한도 없음)"},
+        {"code": "R2", "cond": "H+물성=중+JG=F",
+         "target": "area2", "pool": len(pool_r2), "assigned": n_r2,
+         "skipped": len(pool_r2) - n_r2, "note": "착수일 asc, 월별 한도"},
+        {"code": "R3", "cond": "H+물성=중+첫≠H+첫3∉{E11,E51}",
+         "target": "area1↔area6 (그룹)", "pool": len(pool_r3), "assigned": n_r3,
+         "skipped": len(pool_r3) - n_r3,
+         "note": f"area1: {n_r3_a1}, area6: {n_r3_a6}  /  그룹 {n_r3_grp_assigned}건 배정/{n_r3_grp_skipped}건 건너뜀"},
+        {"code": "R4", "cond": "H+대중+첫=H+끝=P",
+         "target": "area7 (그룹)", "pool": len(pool_r4), "assigned": n_r4,
+         "skipped": len(pool_r4) - n_r4,
+         "note": f"그룹 {n_grp_r4_a}/{n_grp_r4}"},
+        {"code": "R5", "cond": "H+대중+첫=H+끝=S",
+         "target": "area8 (그룹)", "pool": len(pool_r5), "assigned": n_r5,
+         "skipped": len(pool_r5) - n_r5,
+         "note": f"그룹 {n_grp_r5_a}/{n_grp_r5}"},
+        {"code": "R6", "cond": "H+대중+첫3∈{E11,F51}+끝=P",
+         "target": "area9 (그룹)", "pool": len(pool_r6), "assigned": n_r6,
+         "skipped": len(pool_r6) - n_r6,
+         "note": f"그룹 {n_grp_r6_a}/{n_grp_r6}"},
+        {"code": "R7", "cond": "H+대중+첫3∈{E11,F51}+끝=S",
+         "target": "area10 (그룹)", "pool": len(pool_r7), "assigned": n_r7,
+         "skipped": len(pool_r7) - n_r7,
+         "note": f"그룹 {n_grp_r7_a}/{n_grp_r7}"},
+        {"code": "R8", "cond": "H+대중+첫3∈{E11,F51} 잔여",
+         "target": "area11", "pool": len(pool_r8), "assigned": n_r8,
+         "skipped": len(pool_r8) - n_r8, "note": "착수일 asc, 월별 한도"},
+        {"code": "R9", "cond": "H+물성=대+PC=P",
+         "target": "area12 (그룹)", "pool": len(pool_r9), "assigned": n_r9,
+         "skipped": len(pool_r9) - n_r9,
+         "note": f"그룹 {n_grp_r9_a}/{n_grp_r9}"},
+        {"code": "R10", "cond": "H + 잔여 (catch-all)",
+         "target": "area1·2·13 순차", "pool": len(pool_r10), "assigned": n_r10,
+         "skipped": len(pool_r10) - n_r10,
+         "note": f"area1: {n_r10_breakdown['area1']}, area2: {n_r10_breakdown['area2']}, area13: {n_r10_breakdown['area13']}"},
+    ],
 }
 
 os.makedirs(os.path.join("web", "src", "data"), exist_ok=True)
