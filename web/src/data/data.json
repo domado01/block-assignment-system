@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20 13:15",
+  "generatedAt": "2026-05-20 13:20",
   "months": [
     "1월",
     "2월",
@@ -15,7 +15,7 @@
     "12월"
   ],
   "blockCount": 10000,
-  "unassignedCount": 4734,
+  "unassignedCount": 4706,
   "workshops": [
     {
       "name": "area1",
@@ -711,83 +711,83 @@
   "assignment": [
     {
       "workshop": "area1",
-      "blockCount": 246,
-      "totalManhours": 13115.64
+      "blockCount": 255,
+      "totalManhours": 14092.4
     },
     {
       "workshop": "area2",
-      "blockCount": 241,
-      "totalManhours": 13762.03
+      "blockCount": 256,
+      "totalManhours": 14383.39
     },
     {
       "workshop": "area3",
-      "blockCount": 253,
-      "totalManhours": 14327.12
+      "blockCount": 243,
+      "totalManhours": 13970.85
     },
     {
       "workshop": "area4",
-      "blockCount": 219,
-      "totalManhours": 12715.82
+      "blockCount": 226,
+      "totalManhours": 12355.44
     },
     {
       "workshop": "area5",
-      "blockCount": 240,
-      "totalManhours": 12369.87
+      "blockCount": 228,
+      "totalManhours": 12525.18
     },
     {
       "workshop": "area6",
-      "blockCount": 239,
-      "totalManhours": 13830.73
+      "blockCount": 256,
+      "totalManhours": 14447.6
     },
     {
       "workshop": "area7",
-      "blockCount": 221,
-      "totalManhours": 10945.88
+      "blockCount": 241,
+      "totalManhours": 13015.21
     },
     {
       "workshop": "area8",
-      "blockCount": 225,
-      "totalManhours": 11271.62
+      "blockCount": 264,
+      "totalManhours": 14932.64
     },
     {
       "workshop": "area9",
-      "blockCount": 247,
-      "totalManhours": 14238.86
+      "blockCount": 225,
+      "totalManhours": 12251.86
     },
     {
       "workshop": "area10",
-      "blockCount": 223,
-      "totalManhours": 11798.75
+      "blockCount": 268,
+      "totalManhours": 14186.18
     },
     {
       "workshop": "area11",
-      "blockCount": 258,
-      "totalManhours": 14382.32
+      "blockCount": 223,
+      "totalManhours": 12634.7
     },
     {
       "workshop": "area12",
-      "blockCount": 282,
-      "totalManhours": 15430.59
+      "blockCount": 253,
+      "totalManhours": 13445.4
     },
     {
       "workshop": "area13",
-      "blockCount": 256,
-      "totalManhours": 13741.69
+      "blockCount": 255,
+      "totalManhours": 13356.44
     },
     {
       "workshop": "area14",
-      "blockCount": 247,
-      "totalManhours": 13451.18
+      "blockCount": 248,
+      "totalManhours": 13952.83
     },
     {
       "workshop": "area15",
-      "blockCount": 238,
-      "totalManhours": 12698.22
+      "blockCount": 239,
+      "totalManhours": 14002.11
     },
     {
       "workshop": "미지정",
-      "blockCount": 1631,
-      "totalManhours": 87771.2
+      "blockCount": 1614,
+      "totalManhours": 87953.38
     }
   ],
   "targetRate": [
@@ -1019,18 +1019,18 @@
   "overloadTable": [
     {
       "month": 1,
-      "h_so_manhours": 47239,
-      "remaining_capacity": -11927,
-      "threshold_120pct": -14312,
-      "excess": 61552,
+      "h_so_manhours": 45757,
+      "remaining_capacity": -11209,
+      "threshold_120pct": -13451,
+      "excess": 59208,
       "is_over": true
     },
     {
       "month": 2,
-      "h_so_manhours": 40532,
-      "remaining_capacity": -10043,
-      "threshold_120pct": -12052,
-      "excess": 52584,
+      "h_so_manhours": 42195,
+      "remaining_capacity": -10200,
+      "threshold_120pct": -12240,
+      "excess": 54436,
       "is_over": true
     },
     {
@@ -1115,9 +1115,9 @@
     }
   ],
   "stepCounts": {
-    "step2": 3320,
-    "step3": 315,
+    "step2": 3368,
+    "step3": 312,
     "step7": 0,
-    "step8": 1631
+    "step8": 1614
   }
 }
