@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20 15:00",
+  "generatedAt": "2026-05-20 15:46",
   "months": [
     "1월",
     "2월",
@@ -15,7 +15,7 @@
     "12월"
   ],
   "blockCount": 10000,
-  "unassignedCount": 4703,
+  "unassignedCount": 2149,
   "workshops": [
     {
       "name": "area1",
@@ -711,83 +711,83 @@
   "assignment": [
     {
       "workshop": "area1",
-      "blockCount": 232,
-      "totalManhours": 13520.72
+      "blockCount": 740,
+      "totalManhours": 40058.24
     },
     {
       "workshop": "area2",
-      "blockCount": 240,
-      "totalManhours": 14051.4
+      "blockCount": 639,
+      "totalManhours": 32668.5
     },
     {
       "workshop": "area3",
-      "blockCount": 241,
-      "totalManhours": 13813.46
+      "blockCount": 636,
+      "totalManhours": 34906.55
     },
     {
       "workshop": "area4",
-      "blockCount": 248,
-      "totalManhours": 13492.41
+      "blockCount": 645,
+      "totalManhours": 36100.64
     },
     {
       "workshop": "area5",
-      "blockCount": 268,
-      "totalManhours": 14322.84
+      "blockCount": 727,
+      "totalManhours": 40189.26
     },
     {
       "workshop": "area6",
-      "blockCount": 261,
-      "totalManhours": 13232.62
+      "blockCount": 676,
+      "totalManhours": 35953.34
     },
     {
       "workshop": "area7",
-      "blockCount": 244,
-      "totalManhours": 13882.88
+      "blockCount": 418,
+      "totalManhours": 22375.56
     },
     {
       "workshop": "area8",
-      "blockCount": 246,
-      "totalManhours": 13585.36
+      "blockCount": 377,
+      "totalManhours": 20353.0
     },
     {
       "workshop": "area9",
-      "blockCount": 225,
-      "totalManhours": 11377.72
+      "blockCount": 258,
+      "totalManhours": 13105.58
     },
     {
       "workshop": "area10",
-      "blockCount": 210,
-      "totalManhours": 11866.81
+      "blockCount": 240,
+      "totalManhours": 12429.25
     },
     {
       "workshop": "area11",
-      "blockCount": 248,
-      "totalManhours": 13137.99
+      "blockCount": 264,
+      "totalManhours": 15188.39
     },
     {
       "workshop": "area12",
-      "blockCount": 222,
-      "totalManhours": 12713.55
+      "blockCount": 632,
+      "totalManhours": 32485.68
     },
     {
       "workshop": "area13",
-      "blockCount": 251,
-      "totalManhours": 13990.0
+      "blockCount": 705,
+      "totalManhours": 38641.33
     },
     {
       "workshop": "area14",
-      "blockCount": 251,
-      "totalManhours": 13570.84
+      "blockCount": 245,
+      "totalManhours": 13699.8
     },
     {
       "workshop": "area15",
-      "blockCount": 235,
-      "totalManhours": 13336.74
+      "blockCount": 273,
+      "totalManhours": 15386.2
     },
     {
       "workshop": "미지정",
-      "blockCount": 1675,
-      "totalManhours": 90137.4
+      "blockCount": 376,
+      "totalManhours": 22076.86
     }
   ],
   "targetRate": [
@@ -1019,115 +1019,115 @@
   "overloadTable": [
     {
       "month": 1,
-      "h_so_manhours": 48348,
-      "remaining_capacity": -12424,
-      "threshold_120pct": -14909,
-      "excess": 63258,
+      "h_so_manhours": 7472,
+      "remaining_capacity": 5677,
+      "threshold_120pct": 6813,
+      "excess": 659,
       "is_over": true
     },
     {
       "month": 2,
-      "h_so_manhours": 41788,
-      "remaining_capacity": -11761,
-      "threshold_120pct": -14114,
-      "excess": 55903,
+      "h_so_manhours": 6943,
+      "remaining_capacity": 4939,
+      "threshold_120pct": 5927,
+      "excess": 1015,
       "is_over": true
     },
     {
       "month": 3,
-      "h_so_manhours": 0,
-      "remaining_capacity": 6384,
-      "threshold_120pct": 7660,
-      "excess": 0,
-      "is_over": false
+      "h_so_manhours": 8290,
+      "remaining_capacity": 2687,
+      "threshold_120pct": 3225,
+      "excess": 5064,
+      "is_over": true
     },
     {
       "month": 4,
-      "h_so_manhours": 0,
-      "remaining_capacity": 13247,
-      "threshold_120pct": 15896,
+      "h_so_manhours": 7293,
+      "remaining_capacity": 9655,
+      "threshold_120pct": 11586,
       "excess": 0,
       "is_over": false
     },
     {
       "month": 5,
-      "h_so_manhours": 0,
-      "remaining_capacity": 11304,
-      "threshold_120pct": 13564,
+      "h_so_manhours": 7166,
+      "remaining_capacity": 8032,
+      "threshold_120pct": 9638,
       "excess": 0,
       "is_over": false
     },
     {
       "month": 6,
-      "h_so_manhours": 0,
-      "remaining_capacity": 8564,
-      "threshold_120pct": 10276,
-      "excess": 0,
-      "is_over": false
+      "h_so_manhours": 7065,
+      "remaining_capacity": 5834,
+      "threshold_120pct": 7001,
+      "excess": 63,
+      "is_over": true
     },
     {
       "month": 7,
-      "h_so_manhours": 0,
-      "remaining_capacity": 11221,
-      "threshold_120pct": 13465,
+      "h_so_manhours": 7938,
+      "remaining_capacity": 7097,
+      "threshold_120pct": 8517,
       "excess": 0,
       "is_over": false
     },
     {
       "month": 8,
-      "h_so_manhours": 0,
-      "remaining_capacity": 9181,
-      "threshold_120pct": 11017,
-      "excess": 0,
-      "is_over": false
+      "h_so_manhours": 7924,
+      "remaining_capacity": 5457,
+      "threshold_120pct": 6548,
+      "excess": 1375,
+      "is_over": true
     },
     {
       "month": 9,
-      "h_so_manhours": 0,
-      "remaining_capacity": 13363,
-      "threshold_120pct": 16035,
+      "h_so_manhours": 7420,
+      "remaining_capacity": 8686,
+      "threshold_120pct": 10423,
       "excess": 0,
       "is_over": false
     },
     {
       "month": 10,
-      "h_so_manhours": 0,
-      "remaining_capacity": 8021,
-      "threshold_120pct": 9625,
-      "excess": 0,
-      "is_over": false
+      "h_so_manhours": 8756,
+      "remaining_capacity": 4379,
+      "threshold_120pct": 5255,
+      "excess": 3501,
+      "is_over": true
     },
     {
       "month": 11,
-      "h_so_manhours": 0,
-      "remaining_capacity": 8381,
-      "threshold_120pct": 10057,
-      "excess": 0,
-      "is_over": false
+      "h_so_manhours": 7616,
+      "remaining_capacity": 5201,
+      "threshold_120pct": 6242,
+      "excess": 1374,
+      "is_over": true
     },
     {
       "month": 12,
-      "h_so_manhours": 0,
-      "remaining_capacity": 9614,
-      "threshold_120pct": 11536,
+      "h_so_manhours": 6783,
+      "remaining_capacity": 6468,
+      "threshold_120pct": 7762,
       "excess": 0,
       "is_over": false
     }
   ],
   "stepCounts": {
-    "step2": 3299,
-    "step3": 323,
-    "step7": 0,
-    "step8": 1675,
+    "step2": 3367,
+    "step3": 318,
+    "step7": 1270,
+    "step8": 376,
     "r1": 0,
-    "r2": 0,
-    "r3": 0,
-    "r4": 0,
-    "r5": 0,
-    "r6": 0,
-    "r7": 0,
-    "r8": 0,
-    "r9": 0,
-    "r10": 0
+    "r2": 344,
+    "r3": 798,
+    "r4": 170,
+    "r5": 163,
+    "r6": 2,
+    "r7": 3,
+    "r8": 6,
+    "r9": 386,
+    "r10": 648
   }
 }

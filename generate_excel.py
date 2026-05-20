@@ -71,6 +71,7 @@ props = [random.choice(["중", "대", "소"]) for _ in range(N)]
 
 DONGIL_RATE = 0.20
 START_BASE = datetime.date(2026, 1, 1)
+START_RANGE_DAYS = 364   # 2026-01-01 ~ 2026-12-31 (비윤년 365일)
 
 rows1 = []
 for i in range(N):
@@ -78,7 +79,7 @@ for i in range(N):
     parent = random.choice(areas) if prop == "소" else None
     pref = random.sample(areas, 5)
     pref1 = "동일" if random.random() < DONGIL_RATE else pref[0]
-    start_date = START_BASE + datetime.timedelta(days=random.randint(0, 58))
+    start_date = START_BASE + datetime.timedelta(days=random.randint(0, START_RANGE_DAYS))
     rows1.append({
         "블록명": block_names[i],
         "물성": prop,
@@ -219,13 +220,14 @@ def make_groups(pool, key_func):
         grp.sort(key=lambda i: rows1[i]["착수일"])
     return sorted(g.values(), key=lambda grp: rows1[grp[0]]["착수일"])
 
-def grouped_stop(pool, area, key=lambda r: (r["PRJ_N"], r["블록명"][:3])):
-    """그룹화 → 첫 그룹부터 area 할당, 월별 목표공수 초과 시 그 그룹부터 정지"""
+def grouped_skip(pool, area, key=lambda r: (r["PRJ_N"], r["블록명"][:3])):
+    """그룹화 → area 할당. 월별 목표공수 초과하는 그룹은 건너뛰고 다음 그룹 계속.
+    한도 초과 area여도 다른 그룹·블록 처리는 멈추지 않음."""
     groups = make_groups(pool, key)
     cnt = 0
     for grp in groups:
         if not group_fits(grp, area):
-            break
+            continue   # 이 그룹만 건너뛰고 다음 그룹 시도
         assign_group(grp, area)
         cnt += len(grp)
     return cnt
@@ -249,7 +251,7 @@ n_r2 = 0
 for i in pool_r2:
     m = month_of[i]
     if cum_per_area["area2"][m] + rows1[i]["공수"] > target_mh["area2"][m]:
-        break
+        continue   # area2가 해당 월 목표공수 초과 → 이 블록은 건너뜀
     assign_to(i, "area2")
     n_r2 += 1
 
@@ -275,32 +277,32 @@ for grp in groups_r3:
         n_r3 += len(grp)
         next_area_r3 = primary
     else:
-        break  # 둘 다 초과 → 멈춤
+        continue   # area1·6 모두 초과 → 이 그룹만 건너뜀
 
 # --- R4: H + 대/중 + 블록명[0]='H' + 블록명[-1]='P' + 미배정 → group, AREA7 ---
 pool_r4 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][0] == "H" and rows1[i]["블록명"][-1] == "P"]
-n_r4 = grouped_stop(pool_r4, "area7")
+n_r4 = grouped_skip(pool_r4, "area7")
 
 # --- R5: H + 대/중 + 블록명[0]='H' + 블록명[-1]='S' + 미배정 → group, AREA8 ---
 pool_r5 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][0] == "H" and rows1[i]["블록명"][-1] == "S"]
-n_r5 = grouped_stop(pool_r5, "area8")
+n_r5 = grouped_skip(pool_r5, "area8")
 
 # --- R6: H + 대/중 + 블록명[:3] ∈ {E11, F51} + 블록명[-1]='P' + 미배정 → group, AREA9 ---
 PREFIX_R6 = {"E11", "F51"}
 pool_r6 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][:3] in PREFIX_R6 and rows1[i]["블록명"][-1] == "P"]
-n_r6 = grouped_stop(pool_r6, "area9")
+n_r6 = grouped_skip(pool_r6, "area9")
 
 # --- R7: H + 대/중 + 블록명[:3] ∈ {E11, F51} + 블록명[-1]='S' + 미배정 → group, AREA10 ---
 pool_r7 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][:3] in PREFIX_R6 and rows1[i]["블록명"][-1] == "S"]
-n_r7 = grouped_stop(pool_r7, "area10")
+n_r7 = grouped_skip(pool_r7, "area10")
 
 # --- R8: H + 대/중 + 블록명[:3] ∈ {E11, F51} + 공란(R6/R7 미적용분) → AREA11 (개별, 착수일 asc) ---
 pool_r8 = sorted(
@@ -313,14 +315,14 @@ n_r8 = 0
 for i in pool_r8:
     m = month_of[i]
     if cum_per_area["area11"][m] + rows1[i]["공수"] > target_mh["area11"][m]:
-        break
+        continue   # area11 초과 → 이 블록만 건너뜀
     assign_to(i, "area11")
     n_r8 += 1
 
 # --- R9: H + 대 + PC=P + 공란 → group(PRJ_N, 블록명[:3]), AREA12 ---
 pool_r9 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] == "대" and rows1[i]["PC"] == "P"]
-n_r9 = grouped_stop(pool_r9, "area12")
+n_r9 = grouped_skip(pool_r9, "area12")
 
 # --- R10: H + 공란 → AREA1, AREA2, AREA13 순차 (개별, 착수일 asc) ---
 pool_r10 = sorted(
@@ -331,15 +333,12 @@ SEQ_R10 = ["area1", "area2", "area13"]
 n_r10 = 0
 for i in pool_r10:
     m = month_of[i]
-    assigned = None
     for a in SEQ_R10:
         if cum_per_area[a][m] + rows1[i]["공수"] <= target_mh[a][m]:
-            assigned = a
             assign_to(i, a)
             n_r10 += 1
             break
-    if assigned is None:
-        break  # 세 area 모두 초과 → 정지
+    # 세 area 모두 초과해도 다음 블록 시도 (이 블록은 그냥 건너뜀)
 
 # 최종작업장 컬럼에 반영
 for i, r in enumerate(rows1):
