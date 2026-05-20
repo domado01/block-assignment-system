@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+web/dist/
+web/.vite/
+
+# Python cache
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# OS junk
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Excel temp files (locked by Excel while open)
+~$*.xlsx
+
+# Claude Code local settings (user/machine specific permissions etc.)
+.claude/settings.local.json
