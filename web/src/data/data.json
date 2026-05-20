@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20 12:17",
+  "generatedAt": "2026-05-20 13:15",
   "months": [
     "1월",
     "2월",
@@ -712,82 +712,82 @@
     {
       "workshop": "area1",
       "blockCount": 246,
-      "totalManhours": 301660
+      "totalManhours": 13115.64
     },
     {
       "workshop": "area2",
       "blockCount": 241,
-      "totalManhours": 316528
+      "totalManhours": 13762.03
     },
     {
       "workshop": "area3",
       "blockCount": 253,
-      "totalManhours": 329523
+      "totalManhours": 14327.12
     },
     {
       "workshop": "area4",
       "blockCount": 219,
-      "totalManhours": 292465
+      "totalManhours": 12715.82
     },
     {
       "workshop": "area5",
       "blockCount": 240,
-      "totalManhours": 284507
+      "totalManhours": 12369.87
     },
     {
       "workshop": "area6",
       "blockCount": 239,
-      "totalManhours": 318106
+      "totalManhours": 13830.73
     },
     {
       "workshop": "area7",
       "blockCount": 221,
-      "totalManhours": 251756
+      "totalManhours": 10945.88
     },
     {
       "workshop": "area8",
       "blockCount": 225,
-      "totalManhours": 259250
+      "totalManhours": 11271.62
     },
     {
       "workshop": "area9",
       "blockCount": 247,
-      "totalManhours": 327495
+      "totalManhours": 14238.86
     },
     {
       "workshop": "area10",
       "blockCount": 223,
-      "totalManhours": 271372
+      "totalManhours": 11798.75
     },
     {
       "workshop": "area11",
       "blockCount": 258,
-      "totalManhours": 330792
+      "totalManhours": 14382.32
     },
     {
       "workshop": "area12",
       "blockCount": 282,
-      "totalManhours": 354905
+      "totalManhours": 15430.59
     },
     {
       "workshop": "area13",
       "blockCount": 256,
-      "totalManhours": 316058
+      "totalManhours": 13741.69
     },
     {
       "workshop": "area14",
       "blockCount": 247,
-      "totalManhours": 309379
+      "totalManhours": 13451.18
     },
     {
       "workshop": "area15",
       "blockCount": 238,
-      "totalManhours": 292060
+      "totalManhours": 12698.22
     },
     {
       "workshop": "미지정",
       "blockCount": 1631,
-      "totalManhours": 2018735
+      "totalManhours": 87771.2
     }
   ],
   "targetRate": [
@@ -1019,18 +1019,18 @@
   "overloadTable": [
     {
       "month": 1,
-      "h_so_manhours": 1086501,
-      "remaining_capacity": -479394,
-      "threshold_120pct": -575272,
-      "excess": 1661773,
+      "h_so_manhours": 47239,
+      "remaining_capacity": -11927,
+      "threshold_120pct": -14312,
+      "excess": 61552,
       "is_over": true
     },
     {
       "month": 2,
-      "h_so_manhours": 932234,
-      "remaining_capacity": -409659,
-      "threshold_120pct": -491590,
-      "excess": 1423824,
+      "h_so_manhours": 40532,
+      "remaining_capacity": -10043,
+      "threshold_120pct": -12052,
+      "excess": 52584,
       "is_over": true
     },
     {

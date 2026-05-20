@@ -81,7 +81,7 @@ for i in range(N):
         "물성": prop,
         "기준계획작업장": random.choice(areas),
         "H/T": random.choice(["H", "T"]),
-        "공수": random.randint(10, 2500),
+        "공수": round(random.randint(10, 2500) / 23, 2),
         "착수일": start_date,
         "부모블록": parent,
         "선호작업장1": pref1,
