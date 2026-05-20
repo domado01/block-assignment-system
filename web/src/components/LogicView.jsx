@@ -1,3 +1,5 @@
+import { useState, useMemo } from 'react'
+import blocksData from '../data/blocks.json'
 import { fmtInt, fmtPct } from '../util'
 
 // ---------- 다이어그램 ----------
@@ -36,11 +38,11 @@ function LogicDiagram() {
       <FlowArrow label="이후 H+대/중 처리" />
       <FlowBox color="blue" step="R1·R2" title="H+물성중 특수 분류" lines={['R1: PRJ=A+D114/174/204 → area2', 'R2: JG=F → area2 (asc)']} />
       <FlowArrow />
-      <FlowBox color="blue" step="R3" title="H+물성중 그룹 → area1/6 교대" lines={['(PRJ_N, 블록명[:3]) 그룹']} />
+      <FlowBox color="blue" step="R3" title="H+물성중 그룹 → area1/6 교대" />
       <FlowArrow />
       <FlowBox color="green" step="R4·R5" title="H+대중+첫H 그룹" lines={['끝P → area7  /  끝S → area8']} />
       <FlowArrow />
-      <FlowBox color="green" step="R6·R7·R8" title="H+대중+E11/F51" lines={['끝P → area9  /  끝S → area10', '나머지 → area11']} />
+      <FlowBox color="green" step="R6·R7·R8" title="H+대중+E11/F51" lines={['끝P → area9 / 끝S → area10', '나머지 → area11']} />
       <FlowArrow />
       <FlowBox color="amber" step="R9" title="H+대+PC=P 그룹 → area12" />
       <FlowArrow />
@@ -51,12 +53,99 @@ function LogicDiagram() {
   )
 }
 
-// ---------- 메인 ----------
-export default function LogicView({ stepCounts, stepDetails, overloadTable, targetRate, months }) {
+// ---------- 블록 상세 테이블 ----------
+const DETAIL_COLUMNS = [
+  { key: 'name', label: '블록명', cls: 'mono' },
+  { key: 'prop', label: '물성' },
+  { key: 'ref', label: '기준계획작업장' },
+  { key: 'ht', label: 'H/T' },
+  { key: 'jg', label: 'JG' },
+  { key: 'pc', label: 'PC' },
+  { key: 'prj', label: 'PRJ' },
+  { key: 'prjN', label: 'PRJ_N', cls: 'num' },
+  { key: 'mh', label: '공수', cls: 'num' },
+  { key: 'date', label: '착수일' },
+  { key: 'parent', label: '부모블록' },
+  { key: 'pref1', label: '선호1' },
+  { key: 'pref2', label: '선호2' },
+  { key: 'pref3', label: '선호3' },
+  { key: 'pref4', label: '선호4' },
+  { key: 'pref5', label: '선호5' },
+  { key: 'finalWs', label: '최종작업장', cls: 'ws' },
+]
+
+const MAX_DISPLAY = 500   // 한 번에 표시할 최대 행 수
+
+function BlockDetailTable({ blocks, selectedStep, onClose }) {
+  const filtered = useMemo(
+    () => blocks.filter((b) => b.assignedBy === selectedStep),
+    [blocks, selectedStep]
+  )
+  const [showAll, setShowAll] = useState(false)
+  const displayed = showAll ? filtered : filtered.slice(0, MAX_DISPLAY)
+
+  return (
+    <div className="panel detail-panel">
+      <div className="panel-head">
+        <h3 className="logic-section-title" style={{ margin: 0, border: 'none' }}>
+          ‘{selectedStep}’ 배정 블록 상세 — 전체 <b>{fmtInt(filtered.length)}</b>개
+          {!showAll && filtered.length > MAX_DISPLAY && (
+            <span className="muted-tag" style={{ marginLeft: 8 }}>
+              상위 {MAX_DISPLAY}개 표시
+            </span>
+          )}
+        </h3>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {!showAll && filtered.length > MAX_DISPLAY && (
+            <button className="btn-secondary" onClick={() => setShowAll(true)}>
+              전체 보기 ({fmtInt(filtered.length)}개)
+            </button>
+          )}
+          <button className="btn-close" onClick={onClose}>닫기 ✕</button>
+        </div>
+      </div>
+      {filtered.length === 0 ? (
+        <p className="hint">이 단계로 배정된 블록이 없습니다.</p>
+      ) : (
+        <div className="block-detail-wrap">
+          <table className="block-detail-table">
+            <thead>
+              <tr>
+                {DETAIL_COLUMNS.map((c) => (
+                  <th key={c.key} className={c.cls || ''}>{c.label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {displayed.map((b) => (
+                <tr key={b.name}>
+                  {DETAIL_COLUMNS.map((c) => {
+                    const v = b[c.key]
+                    const display = v === null || v === undefined ? '—' : String(v)
+                    return (
+                      <td key={c.key} className={c.cls || ''}>
+                        {display}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ---------- 메인 LogicView ----------
+export default function LogicView({ stepDetails, overloadTable, targetRate, months }) {
   const details = stepDetails || []
   const totalPool = details.reduce((a, x) => a + (x.pool || 0), 0)
   const totalAssigned = details.reduce((a, x) => a + (x.assigned || 0), 0)
   const totalSkipped = details.reduce((a, x) => a + (x.skipped || 0), 0)
+
+  const [selectedStep, setSelectedStep] = useState(null)
 
   return (
     <div className="logic-view">
@@ -93,8 +182,8 @@ export default function LogicView({ stepCounts, stepDetails, overloadTable, targ
       <div className="panel">
         <h3 className="logic-section-title">단계·규칙별 검증 테이블</h3>
         <p className="hint" style={{ marginBottom: 12 }}>
-          각 단계·규칙의 <b>후보 수(필터 매칭)</b>, <b>배정 수</b>, <b>미배정 수(한도 초과로 건너뜀)</b>를 한눈에 확인하세요.
-          후보=0이면 필터가 너무 좁은 것이고, 미배정&gt;0이면 한도 초과로 건너뛴 블록입니다.
+          행을 클릭하면 해당 단계·규칙으로 배정된 블록의 상세 리스트(1번 테이블 전체 컬럼)가 아래에 표시됩니다.
+          다시 클릭하면 닫힙니다.
         </p>
         <div className="table-wrap">
           <table className="verify-table">
@@ -114,8 +203,14 @@ export default function LogicView({ stepCounts, stepDetails, overloadTable, targ
               {details.map((d, idx) => {
                 const rate = d.pool > 0 ? (d.assigned / d.pool) * 100 : null
                 const cls = d.pool === 0 ? 'no-pool' : d.assigned === 0 ? 'no-assign' : d.skipped > 0 ? 'partial' : 'full'
+                const sel = selectedStep === d.code
+                const clickable = d.assigned > 0
                 return (
-                  <tr key={idx} className={cls}>
+                  <tr
+                    key={idx}
+                    className={`${cls} ${clickable ? 'clickable' : ''} ${sel ? 'selected' : ''}`}
+                    onClick={() => clickable && setSelectedStep(sel ? null : d.code)}
+                  >
                     <td><b>{d.code}</b></td>
                     <td className="cond">{d.cond}</td>
                     <td>{d.target}</td>
@@ -144,6 +239,14 @@ export default function LogicView({ stepCounts, stepDetails, overloadTable, targ
           <span className="legend-item"><i style={{ background: '#fee2e2', borderColor: '#dc2626' }} /> 후보=0 또는 전부 건너뜀</span>
         </div>
       </div>
+
+      {selectedStep && (
+        <BlockDetailTable
+          blocks={blocksData}
+          selectedStep={selectedStep}
+          onClose={() => setSelectedStep(null)}
+        />
+      )}
 
       <div className="panel">
         <h3 className="logic-section-title">단계 6 — H+소 월공수 vs area3~5 잔여능력 120% 한도</h3>

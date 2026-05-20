@@ -105,6 +105,7 @@ month_of = [r["착수일"].month for r in rows1]
 # 최종작업장 배정 — 기존 1~8단계 + 신규 R1~R10
 # ===================================================================
 final_ws = [None] * N
+assigned_by = [None] * N   # 각 블록이 어떤 단계/규칙으로 배정됐는지 추적
 
 # --- 단계 1: 목표 조업도 + 목표 공수 ---
 total_load_pm = {m: sum(load_by_area[a][m] for a in areas) for m in months}
@@ -117,6 +118,7 @@ n_step2 = 0
 for i, r in enumerate(rows1):
     if r["H/T"] == "T" and r["물성"] in ("대", "중"):
         final_ws[i] = r["기준계획작업장"]
+        assigned_by[i] = "단계 2"
         n_step2 += 1
 
 # --- 단계 3: T + 소 + 동일 → 부모블록 ---
@@ -124,6 +126,7 @@ n_step3 = 0
 for i, r in enumerate(rows1):
     if final_ws[i] is None and r["H/T"] == "T" and r["물성"] == "소" and r["선호작업장1"] == "동일":
         final_ws[i] = r["부모블록"]
+        assigned_by[i] = "단계 3"
         n_step3 += 1
 
 # --- 단계 4: H+소 공수 월별 합산 (분석) ---
@@ -178,6 +181,7 @@ for i in pool_s7:
         assigned_area = a
         month_cum_357[a][m] += mh
         final_ws[i] = a
+        assigned_by[i] = "단계 7"
         n_step7 += 1
         break
     next_idx = (target_areas_357.index(assigned_area) + 1) % 3 if assigned_area else 0
@@ -187,6 +191,7 @@ n_step8 = 0
 for i, r in enumerate(rows1):
     if final_ws[i] is None and r["H/T"] == "H" and r["물성"] == "소":
         final_ws[i] = "미지정"
+        assigned_by[i] = "단계 8"
         n_step8 += 1
 
 # ===================================================================
@@ -197,9 +202,11 @@ for i in range(N):
     if final_ws[i] in cum_per_area:
         cum_per_area[final_ws[i]][month_of[i]] += rows1[i]["공수"]
 
-def assign_to(i, area):
+def assign_to(i, area, step_code=None):
     cum_per_area[area][month_of[i]] += rows1[i]["공수"]
     final_ws[i] = area
+    if step_code is not None:
+        assigned_by[i] = step_code
 
 def group_fits(group_indices, area):
     monthly = defaultdict(float)
@@ -207,9 +214,9 @@ def group_fits(group_indices, area):
         monthly[month_of[i]] += rows1[i]["공수"]
     return all(cum_per_area[area][m] + monthly[m] <= target_mh[area][m] for m in monthly)
 
-def assign_group(group_indices, area):
+def assign_group(group_indices, area, step_code=None):
     for i in group_indices:
-        assign_to(i, area)
+        assign_to(i, area, step_code)
 
 def make_groups(pool, key_func):
     """key_func로 그룹화. 각 그룹은 착수일 asc. 그룹들은 그룹 내 최소 착수일 asc."""
@@ -220,7 +227,7 @@ def make_groups(pool, key_func):
         grp.sort(key=lambda i: rows1[i]["착수일"])
     return sorted(g.values(), key=lambda grp: rows1[grp[0]]["착수일"])
 
-def grouped_skip(pool, area, key=lambda r: (r["PRJ_N"], r["블록명"][:3])):
+def grouped_skip(pool, area, step_code=None, key=lambda r: (r["PRJ_N"], r["블록명"][:3])):
     """그룹화 → area 할당. 월별 목표공수 초과하는 그룹은 건너뛰고 다음 그룹 계속.
     한도 초과 area여도 다른 그룹·블록 처리는 멈추지 않음.
     Returns: (assigned_block_count, total_group_count, assigned_group_count)"""
@@ -230,7 +237,7 @@ def grouped_skip(pool, area, key=lambda r: (r["PRJ_N"], r["블록명"][:3])):
     for grp in groups:
         if not group_fits(grp, area):
             continue   # 이 그룹만 건너뛰고 다음 그룹 시도
-        assign_group(grp, area)
+        assign_group(grp, area, step_code)
         cnt += len(grp)
         grp_assigned += 1
     return cnt, len(groups), grp_assigned
@@ -242,7 +249,7 @@ pool_r1 = [i for i, r in enumerate(rows1) if final_ws[i] is None
            and r["물성"] == "중" and r["블록명"][:4] in TARGET_R1]
 n_r1 = 0
 for i in pool_r1:
-    assign_to(i, "area2")
+    assign_to(i, "area2", "R1")
     n_r1 += 1
 
 # --- R2: H + 물성=중 + JG=F + 미배정 → AREA2 (착수일 asc, 월별 목표공수 한도) ---
@@ -256,7 +263,7 @@ for i in pool_r2:
     m = month_of[i]
     if cum_per_area["area2"][m] + rows1[i]["공수"] > target_mh["area2"][m]:
         continue   # area2가 해당 월 목표공수 초과 → 이 블록은 건너뜀
-    assign_to(i, "area2")
+    assign_to(i, "area2", "R2")
     n_r2 += 1
 
 # --- R3: H + 물성=중 + 블록명[0]≠'H' + 블록명[:3] ∉ {E11, E51} + 미배정
@@ -277,7 +284,7 @@ for grp in groups_r3:
     primary = next_area_r3
     secondary = "area6" if primary == "area1" else "area1"
     if group_fits(grp, primary):
-        assign_group(grp, primary)
+        assign_group(grp, primary, "R3")
         n_r3 += len(grp)
         if primary == "area1":
             n_r3_a1 += len(grp)
@@ -286,7 +293,7 @@ for grp in groups_r3:
         n_r3_grp_assigned += 1
         next_area_r3 = secondary
     elif group_fits(grp, secondary):
-        assign_group(grp, secondary)
+        assign_group(grp, secondary, "R3")
         n_r3 += len(grp)
         if secondary == "area1":
             n_r3_a1 += len(grp)
@@ -302,26 +309,26 @@ for grp in groups_r3:
 pool_r4 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][0] == "H" and rows1[i]["블록명"][-1] == "P"]
-n_r4, n_grp_r4, n_grp_r4_a = grouped_skip(pool_r4, "area7")
+n_r4, n_grp_r4, n_grp_r4_a = grouped_skip(pool_r4, "area7", "R4")
 
 # --- R5: H + 대/중 + 블록명[0]='H' + 블록명[-1]='S' + 미배정 → group, AREA8 ---
 pool_r5 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][0] == "H" and rows1[i]["블록명"][-1] == "S"]
-n_r5, n_grp_r5, n_grp_r5_a = grouped_skip(pool_r5, "area8")
+n_r5, n_grp_r5, n_grp_r5_a = grouped_skip(pool_r5, "area8", "R5")
 
 # --- R6: H + 대/중 + 블록명[:3] ∈ {E11, F51} + 블록명[-1]='P' + 미배정 → group, AREA9 ---
 PREFIX_R6 = {"E11", "F51"}
 pool_r6 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][:3] in PREFIX_R6 and rows1[i]["블록명"][-1] == "P"]
-n_r6, n_grp_r6, n_grp_r6_a = grouped_skip(pool_r6, "area9")
+n_r6, n_grp_r6, n_grp_r6_a = grouped_skip(pool_r6, "area9", "R6")
 
 # --- R7: H + 대/중 + 블록명[:3] ∈ {E11, F51} + 블록명[-1]='S' + 미배정 → group, AREA10 ---
 pool_r7 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] in ("대", "중")
            and rows1[i]["블록명"][:3] in PREFIX_R6 and rows1[i]["블록명"][-1] == "S"]
-n_r7, n_grp_r7, n_grp_r7_a = grouped_skip(pool_r7, "area10")
+n_r7, n_grp_r7, n_grp_r7_a = grouped_skip(pool_r7, "area10", "R7")
 
 # --- R8: H + 대/중 + 블록명[:3] ∈ {E11, F51} + 공란(R6/R7 미적용분) → AREA11 (개별, 착수일 asc) ---
 pool_r8 = sorted(
@@ -335,13 +342,13 @@ for i in pool_r8:
     m = month_of[i]
     if cum_per_area["area11"][m] + rows1[i]["공수"] > target_mh["area11"][m]:
         continue   # area11 초과 → 이 블록만 건너뜀
-    assign_to(i, "area11")
+    assign_to(i, "area11", "R8")
     n_r8 += 1
 
 # --- R9: H + 대 + PC=P + 공란 → group(PRJ_N, 블록명[:3]), AREA12 ---
 pool_r9 = [i for i in range(N) if final_ws[i] is None
            and rows1[i]["H/T"] == "H" and rows1[i]["물성"] == "대" and rows1[i]["PC"] == "P"]
-n_r9, n_grp_r9, n_grp_r9_a = grouped_skip(pool_r9, "area12")
+n_r9, n_grp_r9, n_grp_r9_a = grouped_skip(pool_r9, "area12", "R9")
 
 # --- R10: H + 공란 → AREA1, AREA2, AREA13 순차 (개별, 착수일 asc) ---
 pool_r10 = sorted(
@@ -355,7 +362,7 @@ for i in pool_r10:
     m = month_of[i]
     for a in SEQ_R10:
         if cum_per_area[a][m] + rows1[i]["공수"] <= target_mh[a][m]:
-            assign_to(i, a)
+            assign_to(i, a, "R10")
             n_r10 += 1
             n_r10_breakdown[a] += 1
             break
@@ -499,13 +506,20 @@ with open(os.path.join("web", "src", "data", "data.json"), "w", encoding="utf-8"
 
 blocks_data = [
     {
-        "prop": r["물성"], "ht": r["H/T"], "jg": r["JG"], "pc": r["PC"],
-        "prj": r["PRJ"], "prjN": r["PRJ_N"],
-        "pref1": r["선호작업장1"], "ref": r["기준계획작업장"], "parent": r["부모블록"],
-        "mh": r["공수"], "date": r["착수일"].strftime("%Y-%m-%d"),
         "name": r["블록명"],
+        "prop": r["물성"],
+        "ref": r["기준계획작업장"],
+        "ht": r["H/T"],
+        "jg": r["JG"], "pc": r["PC"], "prj": r["PRJ"], "prjN": r["PRJ_N"],
+        "mh": r["공수"],
+        "date": r["착수일"].strftime("%Y-%m-%d"),
+        "parent": r["부모블록"],
+        "pref1": r["선호작업장1"], "pref2": r["선호작업장2"], "pref3": r["선호작업장3"],
+        "pref4": r["선호작업장4"], "pref5": r["선호작업장5"],
+        "finalWs": final_ws[idx],
+        "assignedBy": assigned_by[idx],
     }
-    for r in rows1
+    for idx, r in enumerate(rows1)
 ]
 with open(os.path.join("web", "src", "data", "blocks.json"), "w", encoding="utf-8") as f:
     json.dump(blocks_data, f, ensure_ascii=False, separators=(",", ":"))
