@@ -16,12 +16,7 @@ function FlowBox({ color, step, title, lines }) {
     <div className={`flow-box flow-box-${color}`}>
       {step && <div className="flow-step">{step}</div>}
       <div className="flow-title">{title}</div>
-      {lines &&
-        lines.map((l, i) => (
-          <div key={i} className="flow-line">
-            {l}
-          </div>
-        ))}
+      {lines && lines.map((l, i) => <div key={i} className="flow-line">{l}</div>)}
     </div>
   )
 }
@@ -31,77 +26,57 @@ function LogicDiagram() {
     <div className="logic-diagram">
       <FlowBox color="gray" title="시작" />
       <FlowArrow />
-      <FlowBox
-        color="blue"
-        step="단계 1"
-        title="목표 조업도 · 목표 공수 산출"
-        lines={[
-          '목표조업도[월] = Σ 부하 ÷ Σ 능력 (전 작업장)',
-          '목표공수[작업장,월] = 목표조업도[월] × 능력[작업장,월]',
-        ]}
-      />
+      <FlowBox color="blue" step="단계 1" title="목표 조업도·공수 산출" lines={['Σ부하 / Σ능력 × 능력']} />
       <FlowArrow />
-      <FlowBox
-        color="green"
-        step="단계 2"
-        title="H/T = T AND 물성 ∈ {대, 중}"
-        lines={['→ 기준계획작업장']}
-      />
+      <FlowBox color="green" step="단계 2·3" title="T 기반 배정" lines={['대/중 → 기준계획작업장', '소+동일 → 부모블록']} />
       <FlowArrow label="미해당" />
-      <FlowBox
-        color="green"
-        step="단계 3"
-        title="H/T = T AND 물성 = 소 AND 선호1 = '동일'"
-        lines={['→ 부모블록']}
-      />
-      <FlowArrow label="미해당" />
-      <FlowBox
-        color="amber"
-        step="단계 4"
-        title="H+소 공수의 착수일 월별 합산"
-      />
+      <FlowBox color="amber" step="단계 4~7" title="H+소 배정" lines={['월별 합산·잔여능력·초과검사', 'area3~5 라운드로빈']} />
       <FlowArrow />
-      <FlowBox
-        color="amber"
-        step="단계 5"
-        title="잔여능력 = area3~5 능력합 − 기지정 공수"
-      />
+      <FlowBox color="red" step="단계 8" title="H+소 잔여 → '미지정'" />
+      <FlowArrow label="이후 H+대/중 처리" />
+      <FlowBox color="blue" step="R1·R2" title="H+물성중 특수 분류" lines={['R1: PRJ=A+D114/174/204 → area2', 'R2: JG=F → area2 (asc)']} />
       <FlowArrow />
-      <FlowBox
-        color="amber"
-        step="단계 6"
-        title="초과 검사"
-        lines={['H+소 월공수 > 잔여능력 × 120% → 월별 초과 테이블']}
-      />
+      <FlowBox color="blue" step="R3" title="H+물성중 그룹 → area1/6 교대" lines={['(PRJ_N, 블록명[:3]) 그룹']} />
       <FlowArrow />
-      <FlowBox
-        color="amber"
-        step="단계 7"
-        title="H+소 미배정 → area3·4·5 라운드로빈"
-        lines={[
-          '착수일 오름차순 처리',
-          '월별 목표공수 초과 시 → 다음 area (3→4→5)',
-          'area5도 초과 시 해당 블록 미배정',
-          '다음 블록 시작 위치는 1칸 회전',
-        ]}
-      />
-      <FlowArrow label="목표공수 초과 / 미배정" />
-      <FlowBox
-        color="red"
-        step="단계 8"
-        title="H+소 잔여 → '미지정'"
-      />
+      <FlowBox color="green" step="R4·R5" title="H+대중+첫H 그룹" lines={['끝P → area7  /  끝S → area8']} />
+      <FlowArrow />
+      <FlowBox color="green" step="R6·R7·R8" title="H+대중+E11/F51" lines={['끝P → area9  /  끝S → area10', '나머지 → area11']} />
+      <FlowArrow />
+      <FlowBox color="amber" step="R9" title="H+대+PC=P 그룹 → area12" />
+      <FlowArrow />
+      <FlowBox color="amber" step="R10" title="H+잔여 → area1·2·13 순차" />
+      <FlowArrow />
+      <FlowBox color="gray" title="종료 (잔여는 공란)" />
     </div>
   )
 }
 
-// ---------- 메인 LogicView ----------
+// ---------- 메인 ----------
 export default function LogicView({ stepCounts, overloadTable, targetRate, months }) {
+  const sc = stepCounts || {}
+  const ruleRows = [
+    { code: '단계 2', cond: 'H/T=T  AND  물성∈{대,중}', area: '기준계획작업장', n: sc.step2 },
+    { code: '단계 3', cond: 'H/T=T  AND  물성=소  AND  선호1=동일', area: '부모블록', n: sc.step3 },
+    { code: '단계 7', cond: 'H/T=H  AND  물성=소  (미배정)', area: 'area3~5 RR', n: sc.step7 },
+    { code: '단계 8', cond: 'H/T=H  AND  물성=소  잔여', area: '미지정', n: sc.step8 },
+    { code: 'R1', cond: 'H+PRJ=A+물성=중+블록명[:4]∈{D114,D174,D204}', area: 'area2', n: sc.r1 },
+    { code: 'R2', cond: 'H+물성=중+JG=F (asc, 한도)', area: 'area2', n: sc.r2 },
+    { code: 'R3', cond: 'H+물성=중+첫≠H+첫3∉{E11,E51} (그룹)', area: 'area1↔6', n: sc.r3 },
+    { code: 'R4', cond: 'H+대중+첫=H+끝=P (그룹)', area: 'area7', n: sc.r4 },
+    { code: 'R5', cond: 'H+대중+첫=H+끝=S (그룹)', area: 'area8', n: sc.r5 },
+    { code: 'R6', cond: 'H+대중+첫3∈{E11,F51}+끝=P (그룹)', area: 'area9', n: sc.r6 },
+    { code: 'R7', cond: 'H+대중+첫3∈{E11,F51}+끝=S (그룹)', area: 'area10', n: sc.r7 },
+    { code: 'R8', cond: 'H+대중+첫3∈{E11,F51} 잔여 (asc)', area: 'area11', n: sc.r8 },
+    { code: 'R9', cond: 'H+물성=대+PC=P (그룹)', area: 'area12', n: sc.r9 },
+    { code: 'R10', cond: 'H+잔여 (asc)', area: 'area1·2·13 순차', n: sc.r10 },
+  ]
+
   return (
     <div className="logic-view">
       <p className="hint">
-        최종작업장은 다음 8단계로 결정됩니다. 1번 엑셀 파일은 이 로직을 적용한 결과이며, 로직 자체를
-        바꾸려면 <code>generate_excel.py</code>를 수정해 다시 실행하세요.
+        최종작업장은 기존 단계 1~8 + 신규 R1~R10 순서로 결정됩니다. 자세한 명세는{' '}
+        <code>generate_excel.py</code>와 <code>CLAUDE.md §5</code> 참고. 단계 1 이후 모든 area별 누적공수는 월별
+        목표공수와 비교해 한도가 적용됩니다 (단계 2 제외, 과부하 무시).
       </p>
 
       <div className="logic-cols">
@@ -112,40 +87,35 @@ export default function LogicView({ stepCounts, overloadTable, targetRate, month
 
         <div>
           <div className="panel logic-panel">
-            <h3 className="logic-section-title">단계별 처리 결과</h3>
-            <div className="cards">
-              <div className="card">
-                <div className="card-label">단계 2 (T+대중)</div>
-                <div className="card-value">{fmtInt(stepCounts?.step2 ?? 0)}</div>
-                <div className="card-sub">기준계획작업장</div>
-              </div>
-              <div className="card">
-                <div className="card-label">단계 3 (T+소+동일)</div>
-                <div className="card-value">{fmtInt(stepCounts?.step3 ?? 0)}</div>
-                <div className="card-sub">부모블록</div>
-              </div>
-              <div className="card">
-                <div className="card-label">단계 7 (H+소 라운드로빈)</div>
-                <div className="card-value">{fmtInt(stepCounts?.step7 ?? 0)}</div>
-                <div className="card-sub">area3~5</div>
-              </div>
-              <div className="card">
-                <div className="card-label">단계 8 (미지정)</div>
-                <div className="card-value">{fmtInt(stepCounts?.step8 ?? 0)}</div>
-                <div className="card-sub">H+소 잔여</div>
-              </div>
+            <h3 className="logic-section-title">단계·규칙별 처리 건수</h3>
+            <div className="table-wrap">
+              <table className="mini-table">
+                <thead>
+                  <tr>
+                    <th>단계/규칙</th>
+                    <th>조건</th>
+                    <th>대상</th>
+                    <th className="num">건수</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ruleRows.map((r) => (
+                    <tr key={r.code} className={r.n === 0 ? 'zero' : ''}>
+                      <td><b>{r.code}</b></td>
+                      <td className="cond">{r.cond}</td>
+                      <td>{r.area}</td>
+                      <td className="num">{fmtInt(r.n ?? 0)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
           <div className="panel logic-panel">
             <h3 className="logic-section-title">단계 1 — 월별 목표 조업도</h3>
             <table className="mini-table">
-              <thead>
-                <tr>
-                  <th>월</th>
-                  <th className="num">목표 조업도</th>
-                </tr>
-              </thead>
+              <thead><tr><th>월</th><th className="num">목표 조업도</th></tr></thead>
               <tbody>
                 {months.map((m, i) => (
                   <tr key={m}>
@@ -160,9 +130,7 @@ export default function LogicView({ stepCounts, overloadTable, targetRate, month
       </div>
 
       <div className="panel">
-        <h3 className="logic-section-title">
-          단계 6 — H+소 월공수 vs area3~5 잔여능력 120% 한도
-        </h3>
+        <h3 className="logic-section-title">단계 6 — H+소 월공수 vs area3~5 잔여능력 120% 한도</h3>
         <div className="table-wrap">
           <table className="overload-table">
             <thead>
@@ -183,22 +151,12 @@ export default function LogicView({ stepCounts, overloadTable, targetRate, month
                   <td className="num">{fmtInt(row.remaining_capacity)}</td>
                   <td className="num">{fmtInt(row.threshold_120pct)}</td>
                   <td className="num">{row.is_over ? fmtInt(row.excess) : '—'}</td>
-                  <td>
-                    {row.is_over ? (
-                      <span className="badge badge-over">★ 초과</span>
-                    ) : (
-                      <span className="badge badge-ok">정상</span>
-                    )}
-                  </td>
+                  <td>{row.is_over ? <span className="badge badge-over">★ 초과</span> : <span className="badge badge-ok">정상</span>}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="hint">
-          잔여능력이 음수이면 area3~5에 이미 들어간 (단계 2~3) 공수가 능력을 넘어선 상태입니다 — 데이터
-          스케일 특성이며 의도된 동작입니다.
-        </p>
       </div>
     </div>
   )

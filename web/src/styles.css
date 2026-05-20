@@ -669,6 +669,18 @@ table {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+.mini-table .cond {
+  font-size: 11.5px;
+  color: #475569;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+.mini-table tr.zero td {
+  color: #94a3b8;
+}
+.mini-table tr.zero .num {
+  color: #ef4444;
+  font-weight: 600;
+}
 
 .overload-table th,
 .overload-table td {
