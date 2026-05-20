@@ -635,6 +635,80 @@ table {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---- '미지정' 행 강조 ---- */
+.assign-table tr.mz-row .ws-name {
+  color: #b45309;
+  font-style: italic;
+}
+.assign-table tr.mz-row {
+  background: #fff7ed;
+}
+.assign-table tr.mz-row:hover {
+  background: #ffedd5;
+}
+
+/* ---- 로직 탭 미니 표 / 초과 테이블 ---- */
+.mini-table {
+  width: 100%;
+  font-size: 12.5px;
+}
+.mini-table th,
+.mini-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.mini-table th {
+  background: #f8fafc;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 11.5px;
+}
+.mini-table .num,
+.overload-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.overload-table th,
+.overload-table td {
+  padding: 8px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.overload-table th {
+  background: #f8fafc;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-align: left;
+}
+.overload-table tr.over {
+  background: #fef2f2;
+}
+.overload-table tr.over td {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-over {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+.badge-ok {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
 /* ---- 푸터 ---- */
 .footer {
   text-align: center;

@@ -5,7 +5,7 @@ export default function AssignmentView({ assignment, workshops, unassignedCount 
   const prioMap = Object.fromEntries(workshops.map((w) => [w.name, w.priority]))
   const assignedBlocks = assignment.reduce((a, x) => a + x.blockCount, 0)
   const totalMh = assignment.reduce((a, x) => a + x.totalManhours, 0)
-  const maxMh = Math.max(...assignment.map((x) => x.totalManhours))
+  const maxMh = Math.max(...assignment.map((x) => x.totalManhours), 1)
   const sorted = [...assignment].sort((a, b) => b.totalManhours - a.totalManhours)
   const totalBlocks = assignedBlocks + unassignedCount
   const assignRate = totalBlocks ? (assignedBlocks / totalBlocks) * 100 : 0
@@ -14,19 +14,21 @@ export default function AssignmentView({ assignment, workshops, unassignedCount 
     <div>
       <div className="cards">
         <div className="card">
-          <div className="card-label">배정 블록</div>
+          <div className="card-label">배정/미지정 블록</div>
           <div className="card-value">{fmtInt(assignedBlocks)}</div>
+          <div className="card-sub">'미지정' 포함</div>
         </div>
         <div className="card">
-          <div className="card-label">미배정 블록</div>
+          <div className="card-label">공란 블록</div>
           <div className="card-value">{fmtInt(unassignedCount)}</div>
+          <div className="card-sub">T+소 비동일, H+대중 등</div>
         </div>
         <div className="card">
-          <div className="card-label">배정률</div>
+          <div className="card-label">처리율</div>
           <div className="card-value">{assignRate.toFixed(1)}%</div>
         </div>
         <div className="card">
-          <div className="card-label">배정 공수 합계</div>
+          <div className="card-label">처리 공수 합계</div>
           <div className="card-value">{fmtInt(totalMh)}</div>
         </div>
       </div>
@@ -45,10 +47,11 @@ export default function AssignmentView({ assignment, workshops, unassignedCount 
           <tbody>
             {sorted.map((x) => {
               const pct = totalMh ? (x.totalManhours / totalMh) * 100 : 0
+              const isUnknown = x.workshop === '미지정'
               return (
-                <tr key={x.workshop}>
+                <tr key={x.workshop} className={isUnknown ? 'mz-row' : ''}>
                   <td className="ws-name">{x.workshop}</td>
-                  <td className="prio">{prioMap[x.workshop]}</td>
+                  <td className="prio">{prioMap[x.workshop] ?? '—'}</td>
                   <td className="num">{fmtInt(x.blockCount)}</td>
                   <td className="num">{fmtInt(x.totalManhours)}</td>
                   <td>

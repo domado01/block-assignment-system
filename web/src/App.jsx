@@ -1,14 +1,10 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState } from 'react'
 import data from './data/data.json'
-import blocks from './data/blocks.json'
 import OperationHeatmap from './components/OperationHeatmap'
 import MonthlyChart from './components/MonthlyChart'
 import AssignmentView from './components/AssignmentView'
 import LogicView from './components/LogicView'
-import { DEFAULT_CONFIG, recomputeAssignment } from './lib/assignment'
 import { fmtInt, fmtPct, RATE_BANDS } from './util'
-
-const STORAGE_KEY = 'assignment-config-v1'
 
 const METRICS = [
   { key: 'rate', label: '조업도' },
@@ -16,35 +12,12 @@ const METRICS = [
   { key: 'load', label: '부하' },
 ]
 
-function loadConfig() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return JSON.parse(JSON.stringify(DEFAULT_CONFIG))
-    const parsed = JSON.parse(raw)
-    if (parsed && parsed.step1 && parsed.step2 && parsed.step3) return parsed
-  } catch (e) {
-    /* ignore */
-  }
-  return JSON.parse(JSON.stringify(DEFAULT_CONFIG))
-}
-
 export default function App() {
   const [tab, setTab] = useState('operation')
   const [metric, setMetric] = useState('rate')
   const [selected, setSelected] = useState(data.workshops[0].name)
 
-  // 로직 편집 상태
-  const [config, setConfig] = useState(loadConfig)
-  const [savedAt, setSavedAt] = useState(null)
-  const [result, setResult] = useState(null) // 재배정 결과 (null이면 기본 데이터 사용)
-  const savedConfigRef = useRef(JSON.stringify(config))
-  const dirty = JSON.stringify(config) !== savedConfigRef.current
-
   const { workshops, months } = data
-
-  // 현재 화면에 보여줄 배정 데이터 (재배정 시 갱신, 아니면 파이썬 결과)
-  const currentAssignment = result ? result.perArea : data.assignment
-  const currentUnassigned = result ? result.unassignedCount : data.unassignedCount
 
   // 월별 평균조업도 (작업장 동일 → 첫 작업장 기준)
   const monthlyRate = workshops[0].operationRate
@@ -54,34 +27,6 @@ export default function App() {
 
   const sel = workshops.find((w) => w.name === selected)
   const metricLabel = METRICS.find((m) => m.key === metric).label
-
-  const handleRecompute = useCallback(() => {
-    const r = recomputeAssignment(blocks, workshops, config)
-    setResult(r)
-  }, [config, workshops])
-
-  const handleSave = useCallback(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
-      savedConfigRef.current = JSON.stringify(config)
-      setSavedAt(new Date().toLocaleTimeString('ko-KR'))
-    } catch (e) {
-      alert('저장 실패: ' + e.message)
-    }
-  }, [config])
-
-  const handleReset = useCallback(() => {
-    const def = JSON.parse(JSON.stringify(DEFAULT_CONFIG))
-    setConfig(def)
-    setResult(null)
-    try {
-      localStorage.removeItem(STORAGE_KEY)
-    } catch (e) {
-      /* ignore */
-    }
-    savedConfigRef.current = JSON.stringify(def)
-    setSavedAt(null)
-  }, [])
 
   return (
     <div className="app">
@@ -216,16 +161,15 @@ export default function App() {
           <div className="panel">
             <div className="panel-head">
               <h2>최종작업장 배정 현황</h2>
-              {result && <span className="muted-tag">브라우저 재배정 결과</span>}
             </div>
             <p className="hint">
-              1번 블록 테이블의 <b>최종작업장</b> 컬럼 기준 집계입니다.
-              {result ? ' 로직 관리 탭에서 재배정한 결과를 표시합니다.' : ' 초기 로직(파이썬 생성) 결과입니다.'}
+              1번 블록 테이블의 <b>최종작업장</b> 컬럼 기준 집계. 8단계 로직 적용 결과입니다 (단계별
+              상세는 <b>로직 관리</b> 탭 참고).
             </p>
             <AssignmentView
-              assignment={currentAssignment}
+              assignment={data.assignment}
               workshops={workshops}
-              unassignedCount={currentUnassigned}
+              unassignedCount={data.unassignedCount}
             />
           </div>
         </main>
@@ -234,14 +178,10 @@ export default function App() {
       {tab === 'logic' && (
         <main>
           <LogicView
-            config={config}
-            onConfigChange={setConfig}
-            onRecompute={handleRecompute}
-            onSave={handleSave}
-            onReset={handleReset}
-            savedAt={savedAt}
-            result={result}
-            dirty={dirty}
+            stepCounts={data.stepCounts}
+            overloadTable={data.overloadTable}
+            targetRate={data.targetRate}
+            months={months}
           />
         </main>
       )}
