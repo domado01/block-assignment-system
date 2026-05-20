@@ -105,6 +105,12 @@ function Step7MonthlyMatrix({ step7Monthly, months }) {
 }
 
 // ---------- 블록 상세 테이블 ----------
+function formatMonthlyMh(mm) {
+  if (!mm) return '—'
+  const entries = Object.entries(mm).sort(([a], [b]) => Number(a) - Number(b))
+  return entries.map(([m, v]) => `${m}월:${v}`).join(' · ')
+}
+
 const DETAIL_COLUMNS = [
   { key: 'name', label: '블록명', cls: 'mono' },
   { key: 'prop', label: '물성' },
@@ -116,6 +122,9 @@ const DETAIL_COLUMNS = [
   { key: 'prjN', label: 'PRJ_N', cls: 'num' },
   { key: 'mh', label: '공수', cls: 'num' },
   { key: 'date', label: '착수일' },
+  { key: 'endDate', label: '종료일' },
+  { key: 'monthlyMh', label: '월별 공수', cls: 'mono-sm',
+    render: (v) => formatMonthlyMh(v) },
   { key: 'parent', label: '부모블록' },
   { key: 'pref1', label: '선호1' },
   { key: 'pref2', label: '선호2' },
@@ -204,7 +213,9 @@ function BlockDetailTable({ blocks, selectedCode, selectedArea, onClose }) {
                     </td>
                     {DETAIL_COLUMNS.map((c) => {
                       const v = b[c.key]
-                      const display = v === null || v === undefined ? '—' : String(v)
+                      const display = c.render
+                        ? c.render(v)
+                        : v === null || v === undefined ? '—' : String(v)
                       return <td key={c.key} className={c.cls || ''}>{display}</td>
                     })}
                   </tr>

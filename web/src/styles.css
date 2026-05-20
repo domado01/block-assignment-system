@@ -964,6 +964,11 @@ table {
   font-weight: 600;
   color: #0f172a;
 }
+.block-detail-table .mono-sm {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 10.5px;
+  color: #475569;
+}
 .block-detail-table .ws {
   font-weight: 700;
   color: var(--accent);
