@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20 16:01",
+  "generatedAt": "2026-05-20 16:16",
   "months": [
     "1월",
     "2월",
@@ -1138,7 +1138,8 @@
       "pool": 3367,
       "assigned": 3367,
       "skipped": 0,
-      "note": "한도 검사 없음"
+      "note": "한도 검사 없음",
+      "lastAssigned": "2026-12-31"
     },
     {
       "code": "단계 3",
@@ -1147,7 +1148,8 @@
       "pool": 318,
       "assigned": 318,
       "skipped": 0,
-      "note": "한도 검사 없음"
+      "note": "한도 검사 없음",
+      "lastAssigned": "2026-12-30"
     },
     {
       "code": "단계 7",
@@ -1156,7 +1158,37 @@
       "pool": 1646,
       "assigned": 1270,
       "skipped": 376,
-      "note": "월별 목표공수 한도"
+      "note": "월별 목표공수 한도",
+      "lastAssigned": "2026-12-31",
+      "subRows": [
+        {
+          "target": "area3",
+          "assigned": 385,
+          "mh": 20275.15,
+          "first": "2026-01-01",
+          "last": "2026-12-31",
+          "annualTarget": 36012.49,
+          "util": 56.3
+        },
+        {
+          "target": "area4",
+          "assigned": 403,
+          "mh": 21975.33,
+          "first": "2026-01-01",
+          "last": "2026-12-31",
+          "annualTarget": 38421.81,
+          "util": 57.2
+        },
+        {
+          "target": "area5",
+          "assigned": 482,
+          "mh": 26342.6,
+          "first": "2026-01-01",
+          "last": "2026-12-31",
+          "annualTarget": 43798.13,
+          "util": 60.1
+        }
+      ]
     },
     {
       "code": "단계 8",
@@ -1165,7 +1197,8 @@
       "pool": 376,
       "assigned": 376,
       "skipped": 0,
-      "note": "잔여 일괄 처리"
+      "note": "잔여 일괄 처리",
+      "lastAssigned": "2026-12-30"
     },
     {
       "code": "R1",
@@ -1174,7 +1207,8 @@
       "pool": 0,
       "assigned": 0,
       "skipped": 0,
-      "note": "직접 배정 (한도 없음)"
+      "note": "직접 배정 (한도 없음)",
+      "lastAssigned": null
     },
     {
       "code": "R2",
@@ -1183,7 +1217,8 @@
       "pool": 560,
       "assigned": 344,
       "skipped": 216,
-      "note": "착수일 asc, 월별 한도"
+      "note": "착수일 asc, 월별 한도",
+      "lastAssigned": "2026-12-13"
     },
     {
       "code": "R3",
@@ -1192,7 +1227,28 @@
       "pool": 945,
       "assigned": 798,
       "skipped": 147,
-      "note": "area1: 350, area6: 448  /  그룹 782건 배정/137건 건너뜀"
+      "note": "그룹 782건 배정 / 137건 건너뜀",
+      "lastAssigned": "2026-12-31",
+      "subRows": [
+        {
+          "target": "area1",
+          "assigned": 350,
+          "mh": 19068.19,
+          "first": "2026-03-01",
+          "last": "2026-12-31",
+          "annualTarget": 39297.32,
+          "util": 48.5
+        },
+        {
+          "target": "area6",
+          "assigned": 448,
+          "mh": 23818.21,
+          "first": "2026-01-02",
+          "last": "2026-12-31",
+          "annualTarget": 44320.17,
+          "util": 53.7
+        }
+      ]
     },
     {
       "code": "R4",
@@ -1201,7 +1257,8 @@
       "pool": 193,
       "assigned": 170,
       "skipped": 23,
-      "note": "그룹 163/186"
+      "note": "그룹 163/186",
+      "lastAssigned": "2026-11-28"
     },
     {
       "code": "R5",
@@ -1210,7 +1267,8 @@
       "pool": 214,
       "assigned": 163,
       "skipped": 51,
-      "note": "그룹 159/207"
+      "note": "그룹 159/207",
+      "lastAssigned": "2026-12-31"
     },
     {
       "code": "R6",
@@ -1219,7 +1277,8 @@
       "pool": 2,
       "assigned": 2,
       "skipped": 0,
-      "note": "그룹 2/2"
+      "note": "그룹 2/2",
+      "lastAssigned": "2026-08-20"
     },
     {
       "code": "R7",
@@ -1228,7 +1287,8 @@
       "pool": 3,
       "assigned": 3,
       "skipped": 0,
-      "note": "그룹 3/3"
+      "note": "그룹 3/3",
+      "lastAssigned": "2026-12-01"
     },
     {
       "code": "R8",
@@ -1237,7 +1297,8 @@
       "pool": 6,
       "assigned": 6,
       "skipped": 0,
-      "note": "착수일 asc, 월별 한도"
+      "note": "착수일 asc, 월별 한도",
+      "lastAssigned": "2026-12-24"
     },
     {
       "code": "R9",
@@ -1246,7 +1307,8 @@
       "pool": 719,
       "assigned": 386,
       "skipped": 333,
-      "note": "그룹 380/704"
+      "note": "그룹 380/704",
+      "lastAssigned": "2026-12-21"
     },
     {
       "code": "R10",
@@ -1255,7 +1317,37 @@
       "pool": 1437,
       "assigned": 648,
       "skipped": 789,
-      "note": "area1: 138, area2: 57, area13: 453"
+      "note": "한 블록당 area1→2→13 순서 시도",
+      "lastAssigned": "2026-12-24",
+      "subRows": [
+        {
+          "target": "area1",
+          "assigned": 138,
+          "mh": 6689.08,
+          "first": "2026-03-04",
+          "last": "2026-12-24",
+          "annualTarget": 39297.32,
+          "util": 17.0
+        },
+        {
+          "target": "area2",
+          "assigned": 57,
+          "mh": 2405.8,
+          "first": "2026-01-04",
+          "last": "2026-11-30",
+          "annualTarget": 33099.59,
+          "util": 7.3
+        },
+        {
+          "target": "area13",
+          "assigned": 453,
+          "mh": 24375.49,
+          "first": "2026-01-01",
+          "last": "2026-12-23",
+          "annualTarget": 38200.15,
+          "util": 63.8
+        }
+      ]
     }
   ]
 }

@@ -422,6 +422,44 @@ mz_mh = sum(rows1[i]["공수"] for i in range(N) if final_ws[i] == "미지정")
 assignment_summary.append({"workshop": "미지정", "blockCount": mz_cnt, "totalManhours": round(mz_mh, 2)})
 unassigned_count = sum(1 for v in final_ws if v is None)
 
+# ===================================================================
+# stepDetails 생성용 헬퍼
+# ===================================================================
+def _last_date_iso(code):
+    """해당 단계/규칙으로 배정된 블록 중 가장 늦은 착수일 (이 시점 이후로 사실상 배정 종료)"""
+    dates = [rows1[i]["착수일"] for i in range(N) if assigned_by[i] == code]
+    return max(dates).isoformat() if dates else None
+
+def _first_date_iso(code):
+    dates = [rows1[i]["착수일"] for i in range(N) if assigned_by[i] == code]
+    return min(dates).isoformat() if dates else None
+
+def _subrows_by_area(code, area_list):
+    """code 로 배정된 블록을 area별로 분해. (단계 7, R3, R10 용)"""
+    rows = []
+    for a in area_list:
+        idxs = [i for i in range(N) if assigned_by[i] == code and final_ws[i] == a]
+        annual_target = round(sum(target_mh[a][m] for m in months), 2)
+        if not idxs:
+            rows.append({
+                "target": a, "assigned": 0, "mh": 0.0,
+                "first": None, "last": None,
+                "annualTarget": annual_target, "util": 0.0,
+            })
+            continue
+        mh_sum = round(sum(rows1[i]["공수"] for i in idxs), 2)
+        dates = [rows1[i]["착수일"] for i in idxs]
+        rows.append({
+            "target": a,
+            "assigned": len(idxs),
+            "mh": mh_sum,
+            "first": min(dates).isoformat(),
+            "last": max(dates).isoformat(),
+            "annualTarget": annual_target,
+            "util": round(mh_sum / annual_target * 100, 1) if annual_target > 0 else 0.0,
+        })
+    return rows
+
 web_data = {
     "generatedAt": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
     "months": [f"{m}월" for m in months],
@@ -446,57 +484,66 @@ web_data = {
         "r1": n_r1, "r2": n_r2, "r3": n_r3, "r4": n_r4, "r5": n_r5,
         "r6": n_r6, "r7": n_r7, "r8": n_r8, "r9": n_r9, "r10": n_r10,
     },
-    # 검증용 상세 — 각 단계/규칙별 후보·배정·미배정·세부 분포
+    # 검증용 상세 — 각 단계/규칙별 후보·배정·미배정·세부 분포 + 멀티타겟 sub rows
     "stepDetails": [
         {"code": "단계 2", "cond": "H/T=T  AND  물성∈{대,중}",
          "target": "기준계획작업장", "pool": n_step2, "assigned": n_step2,
-         "skipped": 0, "note": "한도 검사 없음"},
+         "skipped": 0, "note": "한도 검사 없음", "lastAssigned": _last_date_iso("단계 2")},
         {"code": "단계 3", "cond": "H/T=T  AND  물성=소  AND  선호1='동일'",
          "target": "부모블록", "pool": n_step3, "assigned": n_step3,
-         "skipped": 0, "note": "한도 검사 없음"},
+         "skipped": 0, "note": "한도 검사 없음", "lastAssigned": _last_date_iso("단계 3")},
         {"code": "단계 7", "cond": "H/T=H  AND  물성=소  (미배정)",
          "target": "area3·4·5 라운드로빈", "pool": len(pool_s7), "assigned": n_step7,
-         "skipped": len(pool_s7) - n_step7, "note": "월별 목표공수 한도"},
+         "skipped": len(pool_s7) - n_step7,
+         "note": "월별 목표공수 한도",
+         "lastAssigned": _last_date_iso("단계 7"),
+         "subRows": _subrows_by_area("단계 7", target_areas_357)},
         {"code": "단계 8", "cond": "H/T=H  AND  물성=소  잔여",
          "target": "'미지정'", "pool": n_step8, "assigned": n_step8,
-         "skipped": 0, "note": "잔여 일괄 처리"},
+         "skipped": 0, "note": "잔여 일괄 처리", "lastAssigned": _last_date_iso("단계 8")},
         {"code": "R1", "cond": "H+PRJ=A+물성=중+첫4∈{D114,D174,D204}",
          "target": "area2", "pool": len(pool_r1), "assigned": n_r1,
-         "skipped": 0, "note": "직접 배정 (한도 없음)"},
+         "skipped": 0, "note": "직접 배정 (한도 없음)", "lastAssigned": _last_date_iso("R1")},
         {"code": "R2", "cond": "H+물성=중+JG=F",
          "target": "area2", "pool": len(pool_r2), "assigned": n_r2,
-         "skipped": len(pool_r2) - n_r2, "note": "착수일 asc, 월별 한도"},
+         "skipped": len(pool_r2) - n_r2,
+         "note": "착수일 asc, 월별 한도", "lastAssigned": _last_date_iso("R2")},
         {"code": "R3", "cond": "H+물성=중+첫≠H+첫3∉{E11,E51}",
          "target": "area1↔area6 (그룹)", "pool": len(pool_r3), "assigned": n_r3,
          "skipped": len(pool_r3) - n_r3,
-         "note": f"area1: {n_r3_a1}, area6: {n_r3_a6}  /  그룹 {n_r3_grp_assigned}건 배정/{n_r3_grp_skipped}건 건너뜀"},
+         "note": f"그룹 {n_r3_grp_assigned}건 배정 / {n_r3_grp_skipped}건 건너뜀",
+         "lastAssigned": _last_date_iso("R3"),
+         "subRows": _subrows_by_area("R3", ["area1", "area6"])},
         {"code": "R4", "cond": "H+대중+첫=H+끝=P",
          "target": "area7 (그룹)", "pool": len(pool_r4), "assigned": n_r4,
          "skipped": len(pool_r4) - n_r4,
-         "note": f"그룹 {n_grp_r4_a}/{n_grp_r4}"},
+         "note": f"그룹 {n_grp_r4_a}/{n_grp_r4}", "lastAssigned": _last_date_iso("R4")},
         {"code": "R5", "cond": "H+대중+첫=H+끝=S",
          "target": "area8 (그룹)", "pool": len(pool_r5), "assigned": n_r5,
          "skipped": len(pool_r5) - n_r5,
-         "note": f"그룹 {n_grp_r5_a}/{n_grp_r5}"},
+         "note": f"그룹 {n_grp_r5_a}/{n_grp_r5}", "lastAssigned": _last_date_iso("R5")},
         {"code": "R6", "cond": "H+대중+첫3∈{E11,F51}+끝=P",
          "target": "area9 (그룹)", "pool": len(pool_r6), "assigned": n_r6,
          "skipped": len(pool_r6) - n_r6,
-         "note": f"그룹 {n_grp_r6_a}/{n_grp_r6}"},
+         "note": f"그룹 {n_grp_r6_a}/{n_grp_r6}", "lastAssigned": _last_date_iso("R6")},
         {"code": "R7", "cond": "H+대중+첫3∈{E11,F51}+끝=S",
          "target": "area10 (그룹)", "pool": len(pool_r7), "assigned": n_r7,
          "skipped": len(pool_r7) - n_r7,
-         "note": f"그룹 {n_grp_r7_a}/{n_grp_r7}"},
+         "note": f"그룹 {n_grp_r7_a}/{n_grp_r7}", "lastAssigned": _last_date_iso("R7")},
         {"code": "R8", "cond": "H+대중+첫3∈{E11,F51} 잔여",
          "target": "area11", "pool": len(pool_r8), "assigned": n_r8,
-         "skipped": len(pool_r8) - n_r8, "note": "착수일 asc, 월별 한도"},
+         "skipped": len(pool_r8) - n_r8,
+         "note": "착수일 asc, 월별 한도", "lastAssigned": _last_date_iso("R8")},
         {"code": "R9", "cond": "H+물성=대+PC=P",
          "target": "area12 (그룹)", "pool": len(pool_r9), "assigned": n_r9,
          "skipped": len(pool_r9) - n_r9,
-         "note": f"그룹 {n_grp_r9_a}/{n_grp_r9}"},
+         "note": f"그룹 {n_grp_r9_a}/{n_grp_r9}", "lastAssigned": _last_date_iso("R9")},
         {"code": "R10", "cond": "H + 잔여 (catch-all)",
          "target": "area1·2·13 순차", "pool": len(pool_r10), "assigned": n_r10,
          "skipped": len(pool_r10) - n_r10,
-         "note": f"area1: {n_r10_breakdown['area1']}, area2: {n_r10_breakdown['area2']}, area13: {n_r10_breakdown['area13']}"},
+         "note": "한 블록당 area1→2→13 순서 시도",
+         "lastAssigned": _last_date_iso("R10"),
+         "subRows": _subrows_by_area("R10", SEQ_R10)},
     ],
 }
 

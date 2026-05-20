@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import blocksData from '../data/blocks.json'
 import { fmtInt, fmtPct } from '../util'
 
@@ -74,21 +74,28 @@ const DETAIL_COLUMNS = [
   { key: 'finalWs', label: '최종작업장', cls: 'ws' },
 ]
 
-const MAX_DISPLAY = 500   // 한 번에 표시할 최대 행 수
+const MAX_DISPLAY = 500
 
-function BlockDetailTable({ blocks, selectedStep, onClose }) {
+function BlockDetailTable({ blocks, selectedCode, selectedArea, onClose }) {
   const filtered = useMemo(
-    () => blocks.filter((b) => b.assignedBy === selectedStep),
-    [blocks, selectedStep]
+    () => blocks.filter((b) =>
+      b.assignedBy === selectedCode &&
+      (selectedArea == null || b.finalWs === selectedArea)
+    ),
+    [blocks, selectedCode, selectedArea]
   )
   const [showAll, setShowAll] = useState(false)
   const displayed = showAll ? filtered : filtered.slice(0, MAX_DISPLAY)
+
+  const title = selectedArea
+    ? `‘${selectedCode} → ${selectedArea}’ 배정 블록 상세 — 전체 ${fmtInt(filtered.length)}개`
+    : `‘${selectedCode}’ 배정 블록 상세 — 전체 ${fmtInt(filtered.length)}개`
 
   return (
     <div className="panel detail-panel">
       <div className="panel-head">
         <h3 className="logic-section-title" style={{ margin: 0, border: 'none' }}>
-          ‘{selectedStep}’ 배정 블록 상세 — 전체 <b>{fmtInt(filtered.length)}</b>개
+          {title}
           {!showAll && filtered.length > MAX_DISPLAY && (
             <span className="muted-tag" style={{ marginLeft: 8 }}>
               상위 {MAX_DISPLAY}개 표시
@@ -105,7 +112,7 @@ function BlockDetailTable({ blocks, selectedStep, onClose }) {
         </div>
       </div>
       {filtered.length === 0 ? (
-        <p className="hint">이 단계로 배정된 블록이 없습니다.</p>
+        <p className="hint">조건에 맞는 블록이 없습니다.</p>
       ) : (
         <div className="block-detail-wrap">
           <table className="block-detail-table">
@@ -122,11 +129,7 @@ function BlockDetailTable({ blocks, selectedStep, onClose }) {
                   {DETAIL_COLUMNS.map((c) => {
                     const v = b[c.key]
                     const display = v === null || v === undefined ? '—' : String(v)
-                    return (
-                      <td key={c.key} className={c.cls || ''}>
-                        {display}
-                      </td>
-                    )
+                    return <td key={c.key} className={c.cls || ''}>{display}</td>
                   })}
                 </tr>
               ))}
@@ -145,7 +148,18 @@ export default function LogicView({ stepDetails, overloadTable, targetRate, mont
   const totalAssigned = details.reduce((a, x) => a + (x.assigned || 0), 0)
   const totalSkipped = details.reduce((a, x) => a + (x.skipped || 0), 0)
 
-  const [selectedStep, setSelectedStep] = useState(null)
+  const [selected, setSelected] = useState(null)   // {code, area} | null
+
+  const isSel = (code, area = null) =>
+    selected && selected.code === code && (selected.area || null) === area
+
+  const toggle = (code, area = null) => {
+    setSelected((prev) =>
+      prev && prev.code === code && (prev.area || null) === area
+        ? null
+        : { code, area }
+    )
+  }
 
   return (
     <div className="logic-view">
@@ -182,8 +196,9 @@ export default function LogicView({ stepDetails, overloadTable, targetRate, mont
       <div className="panel">
         <h3 className="logic-section-title">단계·규칙별 검증 테이블</h3>
         <p className="hint" style={{ marginBottom: 12 }}>
-          행을 클릭하면 해당 단계·규칙으로 배정된 블록의 상세 리스트(1번 테이블 전체 컬럼)가 아래에 표시됩니다.
-          다시 클릭하면 닫힙니다.
+          행을 클릭하면 그 단계로 배정된 블록의 상세 리스트(1번 테이블 전체 컬럼)가 아래에 표시됩니다.
+          멀티-타겟 규칙(단계 7, R3, R10)은 area별 sub-row가 함께 표시되며, sub-row 클릭 시 그 area로 배정된 블록만 필터됩니다.
+          <b> 마지막 배정 착수일</b>은 그 area가 사실상 saturate된 시점을 나타냅니다.
         </p>
         <div className="table-wrap">
           <table className="verify-table">
@@ -195,7 +210,8 @@ export default function LogicView({ stepDetails, overloadTable, targetRate, mont
                 <th className="num">후보</th>
                 <th className="num">배정</th>
                 <th className="num">미배정</th>
-                <th className="num">배정률</th>
+                <th className="num">배정률 / 활용률</th>
+                <th>마지막 배정</th>
                 <th>비고</th>
               </tr>
             </thead>
@@ -203,23 +219,49 @@ export default function LogicView({ stepDetails, overloadTable, targetRate, mont
               {details.map((d, idx) => {
                 const rate = d.pool > 0 ? (d.assigned / d.pool) * 100 : null
                 const cls = d.pool === 0 ? 'no-pool' : d.assigned === 0 ? 'no-assign' : d.skipped > 0 ? 'partial' : 'full'
-                const sel = selectedStep === d.code
+                const sel = isSel(d.code, null)
                 const clickable = d.assigned > 0
                 return (
-                  <tr
-                    key={idx}
-                    className={`${cls} ${clickable ? 'clickable' : ''} ${sel ? 'selected' : ''}`}
-                    onClick={() => clickable && setSelectedStep(sel ? null : d.code)}
-                  >
-                    <td><b>{d.code}</b></td>
-                    <td className="cond">{d.cond}</td>
-                    <td>{d.target}</td>
-                    <td className="num">{fmtInt(d.pool)}</td>
-                    <td className="num">{fmtInt(d.assigned)}</td>
-                    <td className="num">{fmtInt(d.skipped)}</td>
-                    <td className="num">{rate === null ? '—' : `${rate.toFixed(1)}%`}</td>
-                    <td className="note">{d.note}</td>
-                  </tr>
+                  <React.Fragment key={idx}>
+                    <tr
+                      className={`${cls} ${clickable ? 'clickable' : ''} ${sel ? 'selected' : ''}`}
+                      onClick={() => clickable && toggle(d.code, null)}
+                    >
+                      <td><b>{d.code}</b></td>
+                      <td className="cond">{d.cond}</td>
+                      <td>{d.target}</td>
+                      <td className="num">{fmtInt(d.pool)}</td>
+                      <td className="num">{fmtInt(d.assigned)}</td>
+                      <td className="num">{fmtInt(d.skipped)}</td>
+                      <td className="num">{rate === null ? '—' : `${rate.toFixed(1)}%`}</td>
+                      <td className="date-col">{d.lastAssigned ?? '—'}</td>
+                      <td className="note">{d.note}</td>
+                    </tr>
+                    {d.subRows && d.subRows.map((sub, sidx) => {
+                      const subSel = isSel(d.code, sub.target)
+                      const subClickable = sub.assigned > 0
+                      return (
+                        <tr
+                          key={`${idx}-${sidx}`}
+                          className={`sub-row ${subClickable ? 'clickable' : ''} ${subSel ? 'selected' : ''}`}
+                          onClick={() => subClickable && toggle(d.code, sub.target)}
+                        >
+                          <td className="sub-code">↳ {sub.target}</td>
+                          <td className="cond muted">⤴ {d.code}</td>
+                          <td><b>{sub.target}</b></td>
+                          <td className="num muted">—</td>
+                          <td className="num"><b>{fmtInt(sub.assigned)}</b></td>
+                          <td className="num muted">—</td>
+                          <td className="num">{sub.util}% <span className="muted">(목표대비)</span></td>
+                          <td className="date-col">{sub.last ?? '—'}</td>
+                          <td className="note">
+                            공수 <b>{fmtInt(sub.mh)}</b> / 연간목표 {fmtInt(sub.annualTarget)}
+                            {sub.first && <span className="muted"> · 첫 배정 {sub.first}</span>}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </React.Fragment>
                 )
               })}
               <tr className="sum-row">
@@ -228,23 +270,25 @@ export default function LogicView({ stepDetails, overloadTable, targetRate, mont
                 <td className="num"><b>{fmtInt(totalAssigned)}</b></td>
                 <td className="num"><b>{fmtInt(totalSkipped)}</b></td>
                 <td className="num"><b>{totalPool > 0 ? `${((totalAssigned / totalPool) * 100).toFixed(1)}%` : '—'}</b></td>
-                <td></td>
+                <td colSpan={2}></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div className="verify-legend">
-          <span className="legend-item"><i style={{ background: '#dcfce7', borderColor: '#16a34a' }} /> 전체 배정 (미배정 0)</span>
+          <span className="legend-item"><i style={{ background: '#dcfce7', borderColor: '#16a34a' }} /> 전체 배정</span>
           <span className="legend-item"><i style={{ background: '#fef9c3', borderColor: '#ca8a04' }} /> 부분 배정 (일부 건너뜀)</span>
           <span className="legend-item"><i style={{ background: '#fee2e2', borderColor: '#dc2626' }} /> 후보=0 또는 전부 건너뜀</span>
+          <span className="legend-item"><i style={{ background: '#f1f5f9', borderColor: '#94a3b8' }} /> ↳ sub-row (area별 분해)</span>
         </div>
       </div>
 
-      {selectedStep && (
+      {selected && (
         <BlockDetailTable
           blocks={blocksData}
-          selectedStep={selectedStep}
-          onClose={() => setSelectedStep(null)}
+          selectedCode={selected.code}
+          selectedArea={selected.area}
+          onClose={() => setSelected(null)}
         />
       )}
 

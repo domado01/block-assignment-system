@@ -765,6 +765,36 @@ table {
   position: relative;
   z-index: 2;
 }
+.verify-table td.date-col {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 11.5px;
+  color: #0f172a;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---- sub-row (area별 분해) ---- */
+.verify-table tbody tr.sub-row {
+  background: #f8fafc !important;
+}
+.verify-table tbody tr.sub-row:hover {
+  background: #e0f2fe !important;
+}
+.verify-table tbody tr.sub-row td {
+  font-size: 11.5px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px dashed #cbd5e1;
+}
+.verify-table tbody tr.sub-row .sub-code {
+  padding-left: 24px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.verify-table tbody tr.sub-row .muted {
+  color: #94a3b8;
+  font-weight: normal;
+}
 
 /* ---- 블록 상세 테이블 ---- */
 .detail-panel {
