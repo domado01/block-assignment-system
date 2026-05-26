@@ -136,7 +136,7 @@ export const DEFAULT_RULES = [
     capacityCheck: 'multi-month', onExceed: 'skip',
   },
   {
-    id: 'R3', label: 'R3 — H+물성중 그룹 → area1 ↔ area6 교대', color: 'blue',
+    id: 'R3', label: 'R3 — H+물성중 그룹 → area1·2·6 라운드로빈', color: 'blue',
     conditions: [
       { field: '최종작업장', op: 'IS_EMPTY', value: null },
       { field: 'H/T', op: '==', value: 'H' },
@@ -144,7 +144,7 @@ export const DEFAULT_RULES = [
       { field: '블록명[:1]', op: '!=', value: 'H' },
       { field: '블록명[:3]', op: 'NOT IN', value: ['E11', 'E51'] },
     ],
-    target: { type: 'alternating', areas: ['area1', 'area6'] },
+    target: { type: 'round-robin', areas: ['area1', 'area2', 'area6'] },
     strategy: 'grouped', grouping: ['PRJ_N', '블록명[:3]'],
     sorting: '그룹 내 최소 착수일 ASC',
     capacityCheck: 'multi-month', onExceed: 'skip',
@@ -231,12 +231,13 @@ export const DEFAULT_RULES = [
     capacityCheck: 'multi-month', onExceed: 'skip',
   },
   {
-    id: 'R10', label: 'R10 — H+잔여 catch-all → area1·2·13 순차', color: 'amber',
+    id: 'R10', label: 'R10 — H+잔여 catch-all → area7·8·9·10·12·13·14 순차', color: 'amber',
     conditions: [
       { field: '최종작업장', op: 'IS_EMPTY', value: null },
       { field: 'H/T', op: '==', value: 'H' },
     ],
-    target: { type: 'sequential', areas: ['area1', 'area2', 'area13'] },
+    target: { type: 'sequential',
+              areas: ['area7', 'area8', 'area9', 'area10', 'area12', 'area13', 'area14'] },
     strategy: 'individual', grouping: null, sorting: '착수일 ASC',
     capacityCheck: 'multi-month', onExceed: 'next-area',
   },

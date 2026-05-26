@@ -38,7 +38,7 @@ function LogicDiagram() {
       <FlowArrow label="이후 H+대/중 처리" />
       <FlowBox color="blue" step="R1·R2" title="H+물성중 특수 분류" lines={['R1: PRJ=A+D114/174/204 → area2', 'R2: JG=F → area2 (asc)']} />
       <FlowArrow />
-      <FlowBox color="blue" step="R3" title="H+물성중 그룹 → area1/6 교대" />
+      <FlowBox color="blue" step="R3" title="H+물성중 그룹 → area1·2·6 라운드로빈" />
       <FlowArrow />
       <FlowBox color="green" step="R4·R5" title="H+대중+첫H 그룹" lines={['끝P → area7  /  끝S → area8']} />
       <FlowArrow />
@@ -46,7 +46,7 @@ function LogicDiagram() {
       <FlowArrow />
       <FlowBox color="amber" step="R9" title="H+대+PC=P 그룹 → area12" />
       <FlowArrow />
-      <FlowBox color="amber" step="R10" title="H+잔여 → area1·2·13 순차" />
+      <FlowBox color="amber" step="R10" title="H+잔여 → area7·8·9·10·12·13·14 순차" />
       <FlowArrow label="이후 T+소+공란 마무리" />
       <FlowBox color="blue" step="R11" title="T+소+공란 → 우선순위순 작업장 × 선호1~5" lines={['작업장 우선순위 1→15 순회', '각 작업장에서 선호1→5 후보 매칭', '그룹 (PRJ_N, 블록명, 물성코드)', '테이블1 우선순위 ASC, 다중월 한도']} />
       <FlowArrow />

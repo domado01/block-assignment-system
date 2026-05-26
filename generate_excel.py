@@ -353,36 +353,27 @@ for i in pool_r3:
     pools_of_block[i].append("R3")
 groups_r3 = make_groups(pool_r3, lambda r: (r["PRJ_N"], r["블록명"][:3]))
 
-next_area_r3 = "area1"
+R3_CYCLE = ["area1", "area2", "area6"]   # 3개 area 라운드로빈 (그룹 단위)
+next_idx_r3 = 0
 n_r3 = 0
-n_r3_a1 = 0
-n_r3_a6 = 0
+n_r3_per_area = {a: 0 for a in R3_CYCLE}
 n_r3_grp_assigned = 0
 n_r3_grp_skipped = 0
 for grp in groups_r3:
-    primary = next_area_r3
-    secondary = "area6" if primary == "area1" else "area1"
-    if group_fits(grp, primary):
-        assign_group(grp, primary, "R3")
-        n_r3 += len(grp)
-        if primary == "area1":
-            n_r3_a1 += len(grp)
-        else:
-            n_r3_a6 += len(grp)
-        n_r3_grp_assigned += 1
-        next_area_r3 = secondary
-    elif group_fits(grp, secondary):
-        assign_group(grp, secondary, "R3")
-        n_r3 += len(grp)
-        if secondary == "area1":
-            n_r3_a1 += len(grp)
-        else:
-            n_r3_a6 += len(grp)
-        n_r3_grp_assigned += 1
-        next_area_r3 = primary
-    else:
+    assigned_area = None
+    for offset in range(len(R3_CYCLE)):
+        idx = (next_idx_r3 + offset) % len(R3_CYCLE)
+        area = R3_CYCLE[idx]
+        if group_fits(grp, area):
+            assign_group(grp, area, "R3")
+            n_r3 += len(grp)
+            n_r3_per_area[area] += len(grp)
+            n_r3_grp_assigned += 1
+            next_idx_r3 = (idx + 1) % len(R3_CYCLE)
+            assigned_area = area
+            break
+    if assigned_area is None:
         n_r3_grp_skipped += 1
-        continue
 
 # --- R4~R7, R9 (grouped) ---
 pool_r4 = [i for i in range(N) if final_ws[i] is None
@@ -444,9 +435,9 @@ pool_r10 = sorted(
 )
 for i in pool_r10:
     pools_of_block[i].append("R10")
-SEQ_R10 = ["area1", "area2", "area13"]
+SEQ_R10 = ["area7", "area8", "area9", "area10", "area12", "area13", "area14"]
 n_r10 = 0
-n_r10_breakdown = {"area1": 0, "area2": 0, "area13": 0}
+n_r10_breakdown = {a: 0 for a in SEQ_R10}
 for i in pool_r10:
     for a in SEQ_R10:
         if not block_fits(i, a):
@@ -671,11 +662,11 @@ web_data = {
          "skipped": len(pool_r2) - n_r2,
          "note": "착수일 asc, 다중월 한도", "lastAssigned": _last_date_iso("R2")},
         {"code": "R3", "cond": "H+물성=중+첫≠H+첫3∉{E11,E51}",
-         "target": "area1↔area6 (그룹)", "pool": len(pool_r3), "assigned": n_r3,
+         "target": "area1·2·6 (그룹 라운드로빈)", "pool": len(pool_r3), "assigned": n_r3,
          "skipped": len(pool_r3) - n_r3,
-         "note": f"그룹 {n_r3_grp_assigned}건 배정 / {n_r3_grp_skipped}건 건너뜀",
+         "note": f"그룹 {n_r3_grp_assigned}건 배정 / {n_r3_grp_skipped}건 건너뜀 · 3-way 순환",
          "lastAssigned": _last_date_iso("R3"),
-         "subRows": _subrows_by_area("R3", ["area1", "area6"])},
+         "subRows": _subrows_by_area("R3", R3_CYCLE)},
         {"code": "R4", "cond": "H+대중+첫=H+끝=P",
          "target": "area7 (그룹)", "pool": len(pool_r4), "assigned": n_r4,
          "skipped": len(pool_r4) - n_r4,
@@ -701,9 +692,9 @@ web_data = {
          "skipped": len(pool_r9) - n_r9,
          "note": f"그룹 {n_grp_r9_a}/{n_grp_r9}", "lastAssigned": _last_date_iso("R9")},
         {"code": "R10", "cond": "H + 잔여 (catch-all)",
-         "target": "area1·2·13 순차", "pool": len(pool_r10), "assigned": n_r10,
+         "target": "area7·8·9·10·12·13·14 순차", "pool": len(pool_r10), "assigned": n_r10,
          "skipped": len(pool_r10) - n_r10,
-         "note": "한 블록당 area1→2→13 순서 시도",
+         "note": "한 블록당 area7→8→9→10→12→13→14 순서 시도",
          "lastAssigned": _last_date_iso("R10"),
          "subRows": _subrows_by_area("R10", SEQ_R10)},
         {"code": "R11", "cond": "T+소+공란 (선호1~5 = 우선순위순 작업장)",
