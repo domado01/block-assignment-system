@@ -456,6 +456,49 @@ for i in pool_r10:
         n_r10_breakdown[a] += 1
         break
 
+# --- R11: T+소+공란 → 테이블2 우선순위순 작업장에 선호1~5 매칭으로 배정 ---
+#  · pool: T+소+공란 (현재까지 미배정)
+#  · 테이블2 우선순위 1번 작업장부터 15번까지 순회
+#  · 각 작업장 W에 대해 선호작업장1 ~ 선호작업장5 순서로:
+#      - 후보 = pool에서 미배정 + 선호N == W 인 블록
+#      - (PRJ_N, 블록명, 물성코드)로 그룹화
+#      - 그룹을 테이블1 우선순위 ASC(1=최우선)로 정렬
+#      - 각 그룹: 다중월 한도 통과 시 W로 배정, 초과 시 건너뜀(continue)
+#  · 5개 선호 모두 끝나면 다음 우선순위 작업장으로
+pool_r11 = [i for i in range(N) if final_ws[i] is None
+            and rows1[i]["H/T"] == "T" and rows1[i]["물성"] == "소"]
+for i in pool_r11:
+    pools_of_block[i].append("R11")
+
+ws_sorted_by_priority = sorted(ws_data, key=lambda w: w["우선순위"])   # 1 = 최우선
+
+n_r11 = 0
+r11_per_area = defaultdict(int)
+r11_per_pref = defaultdict(lambda: defaultdict(int))   # area -> {pref_idx: count}
+
+for ws in ws_sorted_by_priority:
+    area = ws["작업장"]
+    for pref_idx in [1, 2, 3, 4, 5]:
+        pref_col = f"선호작업장{pref_idx}"
+        candidates = [i for i in pool_r11
+                      if final_ws[i] is None and rows1[i][pref_col] == area]
+        if not candidates:
+            continue
+        # (PRJ_N, 블록명, 물성코드) 그룹화 — 블록명 고유이므로 그룹은 사실상 1블록 단위
+        groups = defaultdict(list)
+        for i in candidates:
+            groups[(rows1[i]["PRJ_N"], rows1[i]["블록명"], rows1[i]["물성코드"])].append(i)
+        # 그룹 정렬: 테이블1 우선순위 ASC (1 = 최우선)
+        sorted_groups = sorted(groups.values(),
+                               key=lambda g: min(rows1[i]["우선순위"] for i in g))
+        for grp in sorted_groups:
+            if group_fits(grp, area):
+                assign_group(grp, area, "R11")
+                n_r11 += len(grp)
+                r11_per_area[area] += len(grp)
+                r11_per_pref[area][pref_idx] += len(grp)
+            # else: 이 그룹 건너뛰고 다음 그룹 시도 (다른 월에 fit 가능한 작은 그룹 있을 수 있음)
+
 # 최종작업장 컬럼에 반영
 for i, r in enumerate(rows1):
     r["최종작업장"] = final_ws[i]
@@ -528,12 +571,14 @@ def _build_step7_monthly():
         rows.append({"area": a, "months": months_data})
     return rows
 
-def _subrows_by_area(code, area_list):
+def _subrows_by_area(code, area_list, skip_empty=False):
     rows = []
     for a in area_list:
         idxs = [i for i in range(N) if assigned_by[i] == code and final_ws[i] == a]
         annual_target = round(sum(target_mh[a][m] for m in months), 2)
         if not idxs:
+            if skip_empty:
+                continue
             rows.append({"target": a, "assigned": 0, "mh": 0.0, "first": None,
                          "last": None, "annualTarget": annual_target, "util": 0.0})
             continue
@@ -600,6 +645,7 @@ web_data = {
         "step2": n_step2, "step3": n_step3, "step7": n_step7, "step8": n_step8,
         "r1": n_r1, "r2": n_r2, "r3": n_r3, "r4": n_r4, "r5": n_r5,
         "r6": n_r6, "r7": n_r7, "r8": n_r8, "r9": n_r9, "r10": n_r10,
+        "r11": n_r11,
     },
     "stepDetails": [
         {"code": "단계 2", "cond": "H/T=T  AND  물성∈{대,중}",
@@ -660,6 +706,13 @@ web_data = {
          "note": "한 블록당 area1→2→13 순서 시도",
          "lastAssigned": _last_date_iso("R10"),
          "subRows": _subrows_by_area("R10", SEQ_R10)},
+        {"code": "R11", "cond": "T+소+공란 (선호1~5 = 우선순위순 작업장)",
+         "target": "우선순위 1→15 작업장 × 선호1~5 순회",
+         "pool": len(pool_r11), "assigned": n_r11,
+         "skipped": len(pool_r11) - n_r11,
+         "note": "그룹: (PRJ_N, 블록명, 물성코드) · 테이블1 우선순위 ASC · 한도 초과 그룹은 건너뜀",
+         "lastAssigned": _last_date_iso("R11"),
+         "subRows": _subrows_by_area("R11", [w["작업장"] for w in ws_sorted_by_priority], skip_empty=True)},
     ],
 }
 
@@ -726,6 +779,14 @@ print()
 print("[신규 규칙]")
 print(f"  R1: {n_r1:>5,}  R2: {n_r2:>5,}  R3: {n_r3:>5,}  R4: {n_r4:>5,}  R5: {n_r5:>5,}")
 print(f"  R6: {n_r6:>5,}  R7: {n_r7:>5,}  R8: {n_r8:>5,}  R9: {n_r9:>5,}  R10: {n_r10:>5,}")
+print(f"  R11 (T+소+선호1~5 우선순위 매칭): {n_r11:,}건 / pool {len(pool_r11):,}건")
+print(f"    작업장별 분포 (우선순위순, 선호별 breakdown):")
+for ws in ws_sorted_by_priority:
+    area = ws["작업장"]
+    cnt = r11_per_area.get(area, 0)
+    if cnt > 0:
+        pref_str = ", ".join(f"선호{k}:{v}" for k, v in sorted(r11_per_pref[area].items()))
+        print(f"      [우선순위 {ws['우선순위']:>2}] {area:>7}: {cnt:>4,}건  ({pref_str})")
 print()
 n_area = sum(1 for v in final_ws if v in areas)
 n_mz = sum(1 for v in final_ws if v == "미지정")
