@@ -47,6 +47,8 @@ function LogicDiagram() {
       <FlowBox color="amber" step="R9" title="H+대+PC=P 그룹 → area12" />
       <FlowArrow />
       <FlowBox color="amber" step="R10" title="H+잔여 → area1·2·13 순차" />
+      <FlowArrow label="이후 T+소+공란 마무리" />
+      <FlowBox color="blue" step="R11" title="T+소+공란 → 우선순위순 작업장 × 선호1~5" lines={['작업장 우선순위 1→15 순회', '각 작업장에서 선호1→5 후보 매칭', '그룹 (PRJ_N, 블록명, 물성코드)', '테이블1 우선순위 ASC, 다중월 한도']} />
       <FlowArrow />
       <FlowBox color="gray" title="종료 (잔여는 공란)" />
     </div>
@@ -252,7 +254,7 @@ export default function LogicView({ stepDetails, overloadTable, targetRate, mont
   return (
     <div className="logic-view">
       <p className="hint">
-        최종작업장은 기존 단계 1~8 + 신규 R1~R10 순서로 결정됩니다. 자세한 명세는{' '}
+        최종작업장은 기존 단계 1~8 + 신규 R1~R11 순서로 결정됩니다. 자세한 명세는{' '}
         <code>generate_excel.py</code>와 <code>CLAUDE.md §5</code> 참고. 단계 1 이후 모든 area별 누적공수는 월별
         목표공수와 비교해 한도가 적용됩니다 (단계 2·3 제외, 과부하 무시).
       </p>
