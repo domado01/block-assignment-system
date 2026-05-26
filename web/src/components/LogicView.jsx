@@ -120,6 +120,8 @@ const DETAIL_COLUMNS = [
   { key: 'pc', label: 'PC' },
   { key: 'prj', label: 'PRJ' },
   { key: 'prjN', label: 'PRJ_N', cls: 'num' },
+  { key: 'propCode', label: '물성코드', cls: 'mono' },
+  { key: 'propPriority', label: '우선순위', cls: 'num' },
   { key: 'mh', label: '공수', cls: 'num' },
   { key: 'date', label: '착수일' },
   { key: 'endDate', label: '종료일' },

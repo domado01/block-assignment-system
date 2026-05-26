@@ -75,6 +75,14 @@ while len(block_names) < N:
 
 props = [random.choice(["중", "대", "소"]) for _ in range(N)]
 
+# 20개 물성코드 (알파벳 2자) + 우선순위 1~20 매핑
+PROP_CODE_COUNT = 20
+_all_2letter = [f"{a}{b}" for a in string.ascii_uppercase for b in string.ascii_uppercase]
+prop_codes = random.sample(_all_2letter, PROP_CODE_COUNT)
+_priorities = list(range(1, PROP_CODE_COUNT + 1))
+random.shuffle(_priorities)
+prop_code_priority = dict(zip(prop_codes, _priorities))   # {"AB": 7, "FG": 12, ...}
+
 DONGIL_RATE = 0.20
 START_BASE = datetime.date(2026, 1, 1)
 START_RANGE_DAYS = 364   # 2026-01-01 ~ 2026-12-31
@@ -117,6 +125,7 @@ for i in range(N):
     end_date = min(start_date + datetime.timedelta(days=duration), END_OF_YEAR)
     mh_total = round(random.randint(10, 2500) / 23, 2)
     monthly_mh = compute_monthly_mh(start_date, end_date, mh_total)
+    prop_code = random.choice(prop_codes)
     rows1.append({
         "블록명": block_names[i],
         "물성": prop,
@@ -126,6 +135,8 @@ for i in range(N):
         "PC": random.choice(["P", "C"]),
         "PRJ": random.choice(["A", "B", "C", "D"]),
         "PRJ_N": random.randint(1111, 1130),
+        "물성코드": prop_code,
+        "우선순위": prop_code_priority[prop_code],
         "공수": mh_total,
         "착수일": start_date,
         "종료일": end_date,
@@ -665,6 +676,7 @@ for idx, r in enumerate(rows1):
         "ref": r["기준계획작업장"],
         "ht": r["H/T"],
         "jg": r["JG"], "pc": r["PC"], "prj": r["PRJ"], "prjN": r["PRJ_N"],
+        "propCode": r["물성코드"], "propPriority": r["우선순위"],
         "mh": r["공수"],
         "date": r["착수일"].strftime("%Y-%m-%d"),
         "endDate": r["종료일"].strftime("%Y-%m-%d"),
@@ -685,6 +697,14 @@ with open(os.path.join("web", "src", "data", "blocks.json"), "w", encoding="utf-
 print(f"1번 테이블: {df1.shape[0]}행 x {df1.shape[1]}열")
 print(f"  착수일: {df1['착수일'].min().date()} ~ {df1['착수일'].max().date()}")
 print(f"  종료일: {df1['종료일'].min().date()} ~ {df1['종료일'].max().date()}")
+
+# 물성코드 ↔ 우선순위 매핑 + 블록 분포
+print(f"  물성코드 매핑 (20개, 우선순위 1~20):")
+mapping_sorted = sorted(prop_code_priority.items(), key=lambda kv: kv[1])
+code_dist = df1['물성코드'].value_counts().to_dict()
+for code, prio in mapping_sorted:
+    cnt = code_dist.get(code, 0)
+    print(f"    [{prio:>2}] {code} → {cnt:,}개 블록")
 
 # 월별 분포 평균 검증
 month_counts = defaultdict(int)
