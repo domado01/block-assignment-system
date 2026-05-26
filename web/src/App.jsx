@@ -4,6 +4,7 @@ import OperationHeatmap from './components/OperationHeatmap'
 import MonthlyChart from './components/MonthlyChart'
 import AssignmentView from './components/AssignmentView'
 import LogicView from './components/LogicView'
+import RuleDesigner from './components/RuleDesigner'
 import { fmtInt, fmtPct, RATE_BANDS } from './util'
 
 const METRICS = [
@@ -58,6 +59,9 @@ export default function App() {
         </button>
         <button className={tab === 'logic' ? 'active' : ''} onClick={() => setTab('logic')}>
           로직 관리
+        </button>
+        <button className={tab === 'designer' ? 'active' : ''} onClick={() => setTab('designer')}>
+          로직 디자이너
         </button>
       </nav>
 
@@ -178,6 +182,12 @@ export default function App() {
               unassignedCount={data.unassignedCount}
             />
           </div>
+        </main>
+      )}
+
+      {tab === 'designer' && (
+        <main>
+          <RuleDesigner />
         </main>
       )}
 
